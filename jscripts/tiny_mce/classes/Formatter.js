@@ -389,8 +389,8 @@
 				each(getParents(container.parentNode).reverse(), function(parent) {
 					// Find format root element
 					if (!formatRoot && parent.id != '_start' && parent.id != '_end') {
-						// If the matched format has a remove none flag we shouldn't split it
-						if (!isBlock(parent) && matchNode(parent, name, vars))
+						// Is the node matching the format we are looking for
+						if (matchNode(parent, name, vars))
 							formatRoot = parent;
 					}
 				});
@@ -1198,8 +1198,8 @@
 					each(dom.getAttribs(node), function(attr) {
 						var name = attr.nodeName.toLowerCase();
 
-						// Don't compare internal attributes or style/class
-						if (name.indexOf('_') !== 0 && name !== 'class' && name !== 'style')
+						// Don't compare internal attributes or style
+						if (name.indexOf('_') !== 0 && name !== 'style')
 							attribs[name] = dom.getAttrib(node, name);
 					});
 
