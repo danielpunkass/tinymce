@@ -925,6 +925,7 @@
 				hilitecolor : {inline : 'span', styles : {backgroundColor : '%value'}},
 				fontname : {inline : 'span', styles : {fontFamily : '%value'}},
 				fontsize : {inline : 'span', styles : {fontSize : '%value'}},
+				fontsize_class : {inline : 'span', attributes : {'class' : '%value'}},
 				blockquote : {block : 'blockquote', wrapper : 1, remove : 'all'},
 
 				removeformat : [
