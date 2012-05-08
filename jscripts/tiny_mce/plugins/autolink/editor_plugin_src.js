@@ -22,15 +22,15 @@
 	init : function(ed, url) {
 		var t = this;
 
-		// Internet Explorer has built-in automatic linking
-		if (tinyMCE.isIE)
-			return;
-
 		// Add a key down handler
-		ed.onKeyDown.add(function(ed, e) {
+		ed.onKeyDown.addToTop(function(ed, e) {
 			if (e.keyCode == 13)
 				return t.handleEnter(ed);
-			});
+		});
+
+		// Internet Explorer has built-in automatic linking for most cases
+		if (tinyMCE.isIE)
+			return;
 
 		ed.onKeyPress.add(function(ed, e) {
 			if (e.which == 41)
@@ -124,12 +124,20 @@
 				r.setEnd(endContainer, start);
 			}
 
+			// Exclude last . from word like "www.site.com."
+			var text = r.toString();
+			if (text.charAt(text.length - 1) == '.') {
+				r.setEnd(endContainer, start - 1);
+			}
+
 			text = r.toString();
-			matches = text.match(/^(https?:\/\/|ssh:\/\/|ftp:\/\/|file:\/|www\.)(.+)$/i);
+			matches = text.match(/^(https?:\/\/|ssh:\/\/|ftp:\/\/|file:\/|www\.|[A-Z0-9._%+-]+@)(.+)$/i);
 
 			if (matches) {
 				if (matches[1] == 'www.') {
 					matches[1] = 'http://www.';
+				} else if (/@$/.test(matches[1])) {
+					matches[1] = 'mailto:' + matches[1];
 				}
 
 				bookmark = ed.selection.getBookmark();
