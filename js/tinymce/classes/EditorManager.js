@@ -91,7 +91,13 @@ define("tinymce/EditorManager", [
 			var self = this, baseURL, documentBaseURL, suffix = "", preInit;
 
 			// Get base URL for the current document
-			documentBaseURL = document.location.href.replace(/[\?#].*$/, '').replace(/[\/\\][^\/]+$/, '');
+			// Accommodate the possibility we have a weird applewebdata: URL (e.g. embedded in MarsEdit)
+			var thisHref = document.location.href;
+			if (thisHref.indexOf("applewebdata:") == 0)
+				documentBaseURL = thisHref
+			else
+				documentBaseURL = window.location.href.replace(/[\?#].*$/, '').replace(/[\/\\][^\/]+$/, '');
+
 			if (!/[\/\\]$/.test(documentBaseURL)) {
 				documentBaseURL += '/';
 			}
