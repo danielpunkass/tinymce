@@ -29,6 +29,8 @@ function setSelection(startSelector, startOffset, endSelector, endOffset) {
 	var rng = editor.dom.createRng();
 
 	function setRange(container, offset, start) {
+		offset = offset || 0;
+
 		if (offset === 'after') {
 			if (start) {
 				rng.setStartAfter(container);
@@ -57,11 +59,12 @@ function initWhenTinyAndRobotAreReady(initTinyFunction) {
 		QUnit.start();
 	}
 
-	tinymce.onAddEditor.add(function(tinymce, ed) {
-		ed.onInit.add(function() {
+	tinymce.on('AddEditor', function(e) {
+		e.editor.on('Init', function() {
 			loaded();
 		});
 	});
+
 	window.robot.onload(initTinyFunction);
 }
 
@@ -138,11 +141,11 @@ function normalizeRng(rng) {
 
 // TODO: Replace this with the new event logic in 3.5
 function type(chr) {
-	var editor = tinymce.activeEditor, keyCode, charCode, event = tinymce.dom.Event, evt, startElm;
+	var editor = tinymce.activeEditor, keyCode, charCode, event = tinymce.dom.Event, evt, startElm, rng;
 
 	function fakeEvent(target, type, evt) {
 		editor.dom.fire(target, type, evt);
-	};
+	}
 
 	// Numeric keyCode
 	if (typeof(chr) == "number") {
@@ -172,15 +175,33 @@ function type(chr) {
 	if (!evt.isDefaultPrevented()) {
 		if (keyCode == 8) {
 			if (editor.getDoc().selection) {
-				var rng = editor.getDoc().selection.createRange();
-				rng.moveStart('character', -1);
-				rng.select();
+				rng = editor.getDoc().selection.createRange();
+
+				if (rng.text.length === 0) {
+					rng.moveStart('character', -1);
+					rng.select();
+				}
+
 				rng.execCommand('Delete', false, null);
 			} else {
+				rng = editor.selection.getRng();
+
+				if (rng.startContainer.nodeType == 1 && rng.collapsed) {
+					var nodes = rng.startContainer.childNodes, lastNode = nodes[nodes.length - 1];
+
+					// If caret is at <p>abc|</p> and after the abc text node then move it to the end of the text node
+					// Expand the range to include the last char <p>ab[c]</p> since IE 11 doesn't delete otherwise
+					if (rng.startOffset >= nodes.length - 1 && lastNode && lastNode.nodeType == 3 && lastNode.data.length > 0) {
+						rng.setStart(lastNode, lastNode.data.length - 1);
+						rng.setEnd(lastNode, lastNode.data.length);
+						editor.selection.setRng(rng);
+					}
+				}
+
 				editor.getDoc().execCommand('Delete', false, null);
 			}
 		} else if (typeof(chr) == 'string') {
-			var rng = editor.selection.getRng(true);
+			rng = editor.selection.getRng(true);
 
 			if (rng.startContainer.nodeType == 3 && rng.collapsed) {
 				rng.startContainer.insertData(rng.startOffset, chr);
@@ -197,8 +218,82 @@ function type(chr) {
 }
 
 function cleanHtml(html) {
-	html = html.toLowerCase().replace(/[\r\n]+/g, '');
-	html = html.replace(/ (sizcache|nodeindex|sizset|data\-mce\-expando)="[^"]*"/g, '');
+	html = html.toLowerCase().replace(/[\r\n]+/gi, '');
+	html = html.replace(/ (sizcache[0-9]+|sizcache|nodeindex|sizset[0-9]+|sizset|data\-mce\-expando|data\-mce\-selected)="[^"]*"/gi, '');
+	html = html.replace(/<span[^>]+data-mce-bogus[^>]+>[\u200B\uFEFF]+<\/span>|<div[^>]+data-mce-bogus[^>]+><\/div>/gi, '');
 
 	return html;
+}
+
+function normalizeHtml(html) {
+	var writer = new tinymce.html.Writer();
+
+	new tinymce.html.SaxParser({
+		validate: false,
+		comment: writer.comment,
+		cdata: writer.cdata,
+		text: writer.text,
+		end: writer.end,
+		pi: writer.pi,
+		doctype: writer.doctype,
+
+		start: function(name, attrs, empty) {
+			attrs.sort(function(a, b) {
+				if (a.name === b.name) {
+					return 0;
+				}
+
+				return a.name > b.name ? 1 : -1;
+			});
+
+			writer.start(name, attrs, empty);
+		}
+	}).parse(html);
+
+	return writer.getContent();
+}
+
+/**
+ * Measures the x, y, w, h of the specified element/control relative to the view element.
+ */
+function rect(ctrl) {
+	var outerRect, innerRect;
+
+	if (ctrl.nodeType) {
+		innerRect = ctrl.getBoundingClientRect();
+	} else {
+		innerRect = ctrl.getEl().getBoundingClientRect();
+	}
+
+	outerRect = document.getElementById('view').getBoundingClientRect();
+
+	return [
+		Math.round(innerRect.left - outerRect.left),
+		Math.round(innerRect.top - outerRect.top),
+		Math.round(innerRect.right - innerRect.left),
+		Math.round(innerRect.bottom - innerRect.top)
+	];
+}
+
+function size(ctrl) {
+	return rect(ctrl).slice(2);
+}
+
+function resetScroll(elm) {
+	elm.scrollTop = 0;
+	elm.scrollLeft = 0;
+}
+
+// Needed since fonts render differently on different platforms
+function nearlyEqualRects(rect1, rect2, diff) {
+	diff = diff || 1;
+
+	for (var i = 0; i < 4; i++) {
+		if (Math.abs(rect1[i] - rect2[i]) > diff) {
+			deepEqual(rect1, rect2);
+			return;
+		}
+	}
+
+	ok(true);
 }
