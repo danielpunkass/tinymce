@@ -128,6 +128,11 @@ define("tinymce/ui/FloatPanel", [
 			if (settings.autohide) {
 				if (!documentClickHandler) {
 					documentClickHandler = function(e) {
+						// Gecko fires click event and in the wrong order on Mac so lets normalize
+						if (e.button == 2) {
+							return;
+						}
+
 						// Hide any float panel when a click is out side that float panel and the
 						// float panels direct parent for example a click on a menu button
 						var i = visiblePanels.length;
@@ -283,7 +288,8 @@ define("tinymce/ui/FloatPanel", [
 		},
 
 		/**
-		 * Hides all visible the float panels.
+		 * Hide all visible float panels with he autohide setting enabled. This is for
+		 * manually hiding floating menus or panels.
 		 *
 		 * @method hideAll
 		 */
@@ -312,11 +318,22 @@ define("tinymce/ui/FloatPanel", [
 		remove: function() {
 			removeVisiblePanel(this);
 			this._super();
+		},
+
+		postRender: function() {
+			var self = this;
+
+			if (self.settings.bodyRole) {
+				this.getEl('body').setAttribute('role', self.settings.bodyRole);
+			}
+
+			return self._super();
 		}
 	});
 
 	/**
-	 * Hides all visible the float panels.
+	 * Hide all visible float panels with he autohide setting enabled. This is for
+	 * manually hiding floating menus or panels.
 	 *
 	 * @static
 	 * @method hideAll
@@ -327,8 +344,7 @@ define("tinymce/ui/FloatPanel", [
 		while (i--) {
 			var panel = visiblePanels[i];
 
-			if (panel.settings.autohide) {
-				panel.fire('cancel', {}, false);
+			if (panel && panel.settings.autohide) {
 				panel.hide();
 				visiblePanels.splice(i, 1);
 			}

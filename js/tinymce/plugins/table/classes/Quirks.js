@@ -237,7 +237,7 @@ define("tinymce/tableplugin/Quirks", [
 						if (last.nodeValue.length > 0) {
 							break;
 						}
-					} else if (last.nodeType == 1 && !last.getAttribute('data-mce-bogus')) {
+					} else if (last.nodeType == 1 && (last.tagName == 'BR' || !last.getAttribute('data-mce-bogus'))) {
 						break;
 					}
 				}
@@ -281,7 +281,7 @@ define("tinymce/tableplugin/Quirks", [
 					tableParent = table.parentNode;
 				}
 
-				allOfCellSelected =rng.startContainer.nodeType == TEXT_NODE &&
+				allOfCellSelected = rng.startContainer.nodeType == TEXT_NODE &&
 					rng.startOffset === 0 &&
 					rng.endOffset === 0 &&
 					currentCell &&
@@ -302,7 +302,7 @@ define("tinymce/tableplugin/Quirks", [
 				}
 
 				if (!currentCell) {
-					currentCell=n;
+					currentCell = n;
 				}
 
 				// Get the very last node inside the table cell
