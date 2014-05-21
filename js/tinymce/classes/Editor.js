@@ -1354,7 +1354,9 @@ define("tinymce/Editor", [
 		 * @return {Boolean} true/false state if the shortcut was added or not.
 		 */
 		addShortcut: function(pattern, desc, cmdFunc, scope) {
-			this.shortcuts.add(pattern, desc, cmdFunc, scope);
+			// In The Red Sweater deployment we assume all keyboard shortcuts are unwanted
+			// unless and until we find a specified desire for one to work.
+			// this.shortcuts.add(pattern, desc, cmdFunc, scope);
 		},
 
 		/**
