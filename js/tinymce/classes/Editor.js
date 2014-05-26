@@ -1426,7 +1426,13 @@ define("tinymce/Editor", [
 			}
 
 			// Browser commands
-			if (self.getDoc().execCommand(cmd, ui, value)) {
+			try {
+				state = self.getDoc().execCommand(cmd, ui, value);
+			} catch (ex) {
+				// Ignore old IE errors
+			}
+
+			if (state) {
 				self.fire('ExecCommand', {command: cmd, ui: ui, value: value});
 				return true;
 			}
@@ -1544,8 +1550,6 @@ define("tinymce/Editor", [
 			var self = this, doc = self.getDoc();
 
 			if (!self.hidden) {
-				self.hidden = true;
-
 				// Fixed bug where IE has a blinking cursor left from the editor
 				if (ie && doc && !self.inline) {
 					doc.execCommand('SelectAll');
@@ -1566,6 +1570,7 @@ define("tinymce/Editor", [
 					DOM.setStyle(self.id, 'display', self.orgDisplay);
 				}
 
+				self.hidden = true;
 				self.fire('hide');
 			}
 		},
