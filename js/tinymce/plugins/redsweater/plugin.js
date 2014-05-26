@@ -80,15 +80,13 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 						par.removeChild(first);
 						par.removeChild(second);
 
-						// Create a new P node (maybe should use forced_root_block from settings, but
-						// we always use P for that ourselves)
-						var newParagraph = editor.getDoc().createElement("P");
-						newParagraph.innerHTML = '<br data-mce-bogus="1">';
-						editor.dom.insertAfter(newParagraph, parent);
-						var newSelection = editor.selection.getRng();
-						newSelection.selectNode(newParagraph);
-						newSelection.collapse();
-						editor.selection.setRng(newSelection);
+						// Now we actually just employ TinyMCE's default shift-return behavior by faking a key event
+						ev = new CustomEvent("keydown", {"keyCode":13, "target":editor});
+						ev.shiftKey = true;
+						ev.keyCode = 13;
+						ev.isImmediatePropagationStopped = function () { return false; };
+						ev.isDefaultPrevented = function () { return false; };
+						editor.fire('keydown', ev);
 					}, 100, parent, brPrevious, brNode);
 				}
 			}
