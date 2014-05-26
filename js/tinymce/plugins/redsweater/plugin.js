@@ -87,7 +87,7 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 						ev.isImmediatePropagationStopped = function () { return false; };
 						ev.isDefaultPrevented = function () { return false; };
 						editor.fire('keydown', ev);
-					}, 100, parent, brPrevious, brNode);
+					}, 0, parent, brPrevious, brNode);
 				}
 			}
 		}
