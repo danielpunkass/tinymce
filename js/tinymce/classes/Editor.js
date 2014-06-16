@@ -416,9 +416,9 @@ define("tinymce/Editor", [
 
 							each(dependencies, function(dep) {
 								var defaultSettings = {
-									prefix:'plugins/',
+									prefix: 'plugins/',
 									resource: dep,
-									suffix:'/plugin' + suffix + '.js'
+									suffix: '/plugin' + suffix + '.js'
 								};
 
 								dep = PluginManager.createUrl(defaultSettings, dep);
@@ -489,7 +489,7 @@ define("tinymce/Editor", [
 				pluginUrl = PluginManager.urls[plugin] || self.documentBaseUrl.replace(/\/$/, '');
 				plugin = trim(plugin);
 				if (Plugin && inArray(initializedPlugins, plugin) === -1) {
-					each(PluginManager.dependencies(plugin), function(dep){
+					each(PluginManager.dependencies(plugin), function(dep) {
 						initPlugin(dep);
 					});
 
@@ -970,7 +970,7 @@ define("tinymce/Editor", [
 
 			// Handle auto focus
 			if (settings.auto_focus) {
-				setTimeout(function () {
+				setTimeout(function() {
 					var ed = self.editorManager.get(settings.auto_focus);
 
 					ed.selection.select(ed.getBody(), 1);
@@ -1169,8 +1169,9 @@ define("tinymce/Editor", [
 		 * need to update the UI states or element path etc.
 		 *
 		 * @method nodeChanged
+		 * @param {Object} args Optional args to pass to NodeChange event handlers.
 		 */
-		nodeChanged: function() {
+		nodeChanged: function(args) {
 			var self = this, selection = self.selection, node, parents, root;
 
 			// Fix for bug #1896577 it seems that this can not be fired while the editor is loading
@@ -1195,7 +1196,11 @@ define("tinymce/Editor", [
 					parents.push(node);
 				});
 
-				self.fire('NodeChange', {element: node, parents: parents});
+				args = args || {};
+				args.element = node;
+				args.parents = parents;
+
+				self.fire('NodeChange', args);
 			}
 		},
 
@@ -1596,10 +1601,10 @@ define("tinymce/Editor", [
 		 * @example
 		 * // Show progress for the active editor
 		 * tinymce.activeEditor.setProgressState(true);
-		 * 
+		 *
 		 * // Hide progress for the active editor
 		 * tinymce.activeEditor.setProgressState(false);
-		 * 
+		 *
 		 * // Show progress after 3 seconds
 		 * tinymce.activeEditor.setProgressState(true, 3000);
 		 */
@@ -2043,8 +2048,8 @@ define("tinymce/Editor", [
 			var self = this;
 
 			if (!self.removed) {
-				self.removed = 1;
 				self.save();
+				self.removed = 1;
 
 				// Remove any hidden input
 				if (self.hasHiddenInput) {
