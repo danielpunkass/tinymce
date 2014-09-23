@@ -6,71 +6,85 @@
 <!-- TinyMCE -->
 <script type="text/javascript" src="../js/tinymce/tinymce.dev.js"></script>
 <script type="text/javascript">
-	tinyMCE.init({
-		// General options
-		mode : "textareas",
-		theme : "modern",
-		plugins : "paste,pagebreak",
 
-		// Theme options
-		theme_advanced_toolbar_location : "external",
-		theme_advanced_toolbar_align : "left",
-		// theme_advanced_statusbar_location : "bottom",
-		theme_advanced_resizing : true,
+	// Note that as of TinyMCE 4 certain callback methods e.g. init_instance_callback are deprecated
+	// in favor of a newer style of using e.g. tinymce.on('init') callback handlers.
+	function installTinyMCEEditor() {
+		tinymce.init({
+			theme : "modern",
+			skin : "redsweater",
+			menubar : false,
+			statusbar : false,
+			border: 0,
+			content_css : "{TINY_MCE_CONTENT_CSS_URL}",
+			mode : "exact",
+			elements : "RSHTMLContent",
+			body_id : "RSHTMLContent",
+			browser_spellcheck : true,
+			custom_shortcuts: false,
+			end_container_on_empty_block : true,
+			entity_encoding : "raw",
+			plugins : "paste, redsweater",
+			paste_remove_spans:false,
+			paste_remove_styles:false,
+			paste_remove_styles_if_webkit:false,
+			convert_urls : false,
+						setup : function(ed) {
 
-		// Drop lists for link/image/media/template dialogs
-		template_external_list_url : "lists/template_list.js",
-		external_link_list_url : "lists/link_list.js",
-		external_image_list_url : "lists/image_list.js",
-		media_external_list_url : "lists/media_list.js",
+				ed.on("ExecCommand", function(event) {
+						console.log("hello ExecComand");
+				});
 
+				ed.on("change", function(event) {
+						console.log("Hello Change");
+				});
 
-		// Replace values for the template plugin
-		template_replace_values : {
-			username : "Some User",
-			staffid : "991234"
+				ed.on("NodeChange", function(event) {
+					if (window.rsHTMLDOMEditor)
+					{
+						console.log("Hello NodeChange");
+					}
+				});
+			},
+
+			extended_valid_elements : "video[class|id|src],script[type|src],iframe[src|style|width|height|scrolling|marginwidth|marginheight|frameborder]," +
+									"object[type|data|width|height|classid|codebase|*],param[name|value],embed[src|type|width|height|flashvars|wmode|autoplay|*]",
+			formats : {
+				cite : [
+					{inline : 'cite'}
+				]
+			}
+		});		
+	}
+
+	// Set this to true to postpone installation until the space key is pressed, giving a chance to install breakpoints, etc.
+	var debugMode = false;
+	if (debugMode)
+	{
+		function delayedInstallTinyMCEEditor()
+		{
+			console.log("Installing TinyMCE Editor.");
+			installTinyMCEEditor();
+			window.removeEventListener("keydown", delayedInstallTinyMCEEditor, false);
+
+			return false;
 		}
-	});
-</script>
+		window.addEventListener("keydown", delayedInstallTinyMCEEditor, false);
 
+	}
+	else
+	{
+		installTinyMCEEditor();
+	}
+
+</script>
 <!-- /TinyMCE -->
 
 </head>
-<body role="application">
 
-<form method="post" action="http://tinymce.moxiecode.com/dump.php?example=true">
-	<div>
-		<h3>Full featured example</h3>
+<body style="margin:0; padding:0;">
 
-		<p>
-			This page shows all available buttons and plugins that are included in the TinyMCE core package.
-			There are more examples on how to use TinyMCE in the <a href="http://tinymce.moxiecode.com/examples/">Wiki</a>.
-		</p>
-
-		<!-- Gets replaced with TinyMCE, remember HTML in a textarea should be encoded -->
-		<div>
-			<textarea id="elm1" name="elm1" rows="15" cols="80" style="width: 80%">
-                &lt;div contentEditable='false' class='mceItemNoResize' id='com_red-sweater_htmleditor_pagebreak' &gt;&lt;span id='com_red-sweater_htmleditor_pagebreak_label'&gt;Testing&lt;/span&gt;&lt;/div&gt;
-			</textarea>
-		</div>
-
-		<!-- Some integration calls -->
-		<a href="javascript:;" onclick="tinymce.get('elm1').show();return false;">[Show]</a>
-		<a href="javascript:;" onclick="tinymce.get('elm1').hide();return false;">[Hide]</a>
-		<a href="javascript:;" onclick="tinymce.get('elm1').execCommand('Bold');return false;">[Bold]</a>
-		<a href="javascript:;" onclick="alert(tinymce.get('elm1').getContent());return false;">[Get contents]</a>
-		<a href="javascript:;" onclick="alert(tinymce.get('elm1').selection.getContent());return false;">[Get selected HTML]</a>
-		<a href="javascript:;" onclick="alert(tinymce.get('elm1').selection.getContent({format : 'text'}));return false;">[Get selected text]</a>
-		<a href="javascript:;" onclick="alert(tinymce.get('elm1').selection.getNode().nodeName);return false;">[Get selected element]</a>
-		<a href="javascript:;" onclick="tinymce.execCommand('mceInsertContent',false,'<b>Hello world!!</b>');return false;">[Insert HTML]</a>
-		<a href="javascript:;" onclick="tinymce.execCommand('mceReplaceContent',false,'<b>{$selection}</b>');return false;">[Replace selection]</a>
-
-		<br />
-		<input type="submit" name="save" value="Submit" />
-		<input type="reset" name="reset" value="Reset" />
-	</div>
-</form>
-
+<!-- Gets replaced with TinyMCE - just a template for what TinyMCE builds -->
+<div id="RSHTMLContent" name="RSHTMLContent" style="margin:0; width:100%; height:100%;"></div>
 
 </body>
-</html>
