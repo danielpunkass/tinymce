@@ -391,14 +391,14 @@ define("tinymce/util/Quirks", [
 // the WebView in such a manner that it will always reach TinyMCE's built-in SelectAll command. Further,
 // the presence of this quirk causes issues with MarsEdit because it gobbles more than just Cmd-A, for
 // example it takes Cmd-Shift-A as well. (http://www.tinymce.com/develop/bugtracker_view.php?id=7184)
-//		function selectAll() {
+		function selectAll() {
 //			editor.on('keydown', function(e) {
 //				if (!isDefaultPrevented(e) && e.keyCode == 65 && VK.metaKeyPressed(e)) {
 //					e.preventDefault();
 //					editor.execCommand('SelectAll');
 //				}
 //			});
-//		}
+		}
 
 		/**
 		 * WebKit has a weird issue where it some times fails to properly convert keypresses to input method keystrokes.
