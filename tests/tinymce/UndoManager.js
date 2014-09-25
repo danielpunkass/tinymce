@@ -89,7 +89,9 @@ test('Typing state', function() {
 	editor.undoManager.clear();
 	editor.setContent('test');
 
-	expect(3);
+	expect(4);
+
+	ok(!editor.undoManager.typing);
 
 	editor.dom.fire(editor.getBody(), 'keydown', {keyCode: 65});
 	ok(editor.undoManager.typing);
@@ -102,7 +104,7 @@ test('Typing state', function() {
 			selectAllFlags.metaKey = true;
 			selectAllFlags.ctrlKey = false;
 	}
-	editor.dom.fire(editor.getBody(), 'keydown', {keyCode: 65});
+	editor.dom.fire(editor.getBody(), 'keydown', selectAllFlags);
 	ok(!editor.undoManager.typing);
 });
 
