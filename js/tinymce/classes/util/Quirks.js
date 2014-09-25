@@ -386,18 +386,8 @@ define("tinymce/util/Quirks", [
 		 * IE selects more than the contents <body>[<p>a</p>]</body> instead of <body><p>[a]</p]</body> see bug #6438
 		 * This selects the whole body so that backspace/delete logic will delete everything
 		 */
-
-// Red Sweater doesn't need this workaround because selectAll: commands are dispatched from outside
-// the WebView in such a manner that it will always reach TinyMCE's built-in SelectAll command. Further,
-// the presence of this quirk causes issues with MarsEdit because it gobbles more than just Cmd-A, for
-// example it takes Cmd-Shift-A as well. (http://www.tinymce.com/develop/bugtracker_view.php?id=7184)
 		function selectAll() {
-//			editor.on('keydown', function(e) {
-//				if (!isDefaultPrevented(e) && e.keyCode == 65 && VK.metaKeyPressed(e)) {
-//					e.preventDefault();
-//					editor.execCommand('SelectAll');
-//				}
-//			});
+			editor.shortcuts.add('ctrl+a', null, 'SelectAll');
 		}
 
 		/**
