@@ -27,12 +27,12 @@ test('Command-Shift-A Doesn\'t Select', function() {
 	ok(rng.collapsed);
 		
 	// Command-Shift-A should not alter the collapsed range
-	editor.dom.fire(editor.getBody(), 'keydown', {keyCode: 65, metaKey:true, shiftKey:true});
+	editor.dom.fire(editor.getBody(), 'keydown', {keyCode: 65, metaKey:true, shiftKey:true, altKey:false, ctrlKey:false});
 	rng = Utils.normalizeRng(editor.selection.getRng(true));
 	ok(rng.collapsed);
 
 	// Command-A i.e. Select All SHOULD
-	editor.dom.fire(editor.getBody(), 'keydown', {keyCode: 65, metaKey:true});
+	editor.dom.fire(editor.getBody(), 'keydown', {keyCode: 65, metaKey:true, shiftKey:false, altKey:false, ctrlKey:false});
 	rng = Utils.normalizeRng(editor.selection.getRng(true));
 	ok(!rng.collapsed);
 });
