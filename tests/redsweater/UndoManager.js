@@ -26,8 +26,7 @@ test('Ignored keystrokes', function() {
 	ok(!editor.undoManager.typing);
 
 	// Command-A i.e. Select All
-	editor.dom.fire(editor.getBody(), 'keydown', {keyCode: 65, metaKey:true});
-
+	editor.dom.fire(editor.getBody(), 'keydown', {keyCode: 65, metaKey:true, shiftKey:false, altKey:false, ctrlKey:false});
 	ok(!editor.undoManager.hasUndo());
 	ok(!editor.undoManager.hasRedo());
 	ok(!editor.undoManager.typing);
