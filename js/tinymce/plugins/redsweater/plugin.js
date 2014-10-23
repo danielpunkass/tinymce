@@ -4,10 +4,12 @@
  * Copyright 2014, Red Sweater Software
  * Released under LGPL License.
  *
- * This plugin includes nuances for behavior of the TinyMCE framework which are not clearly 
+ * This plugin includes nuances for behavior of the TinyMCE framework which are not clearly
  * bug fixes that should be submitted as pull requests, but which for Red Sweater's purposes
  * are desirable behaviors across the board.
  */
+
+/*global tinymce:true, CustomEvent */
 
 tinymce.PluginManager.add('redsweater', function(editor) {
 
@@ -23,8 +25,7 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 
 		// If it's a standalone BR node, or if it's a paragraph with a break node or literal newline in it.
 		if (last && (last.nodeName == "BR" || (last.childNodes.length == 1 &&
-			(last.firstChild.nodeName == 'BR' || last.firstChild.nodeValue == '\u00a0'))))
-		{
+			(last.firstChild.nodeName == 'BR' || last.firstChild.nodeValue == '\u00a0')))) {
 			editor.dom.remove(last);
 		}
 	});
@@ -55,8 +56,7 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 	// it will get you out.
 	function nodeInserted(changeEvent) {
 		// Only interested if we inserted a BR into a PRE
-		if ((changeEvent.relatedNode.nodeName === 'PRE') && (changeEvent.target.nodeName === 'BR'))
-		{
+		if ((changeEvent.relatedNode.nodeName === 'PRE') && (changeEvent.target.nodeName === 'BR')) {
 			// Did we just insert a second BR in a row at the end of the PRE block?
 			// Note that it's weird because sometimes the new br will be inserted BEFORE the existing
 			// br at the end, and sometimes after. So two in a row in either case means times to remove
@@ -69,10 +69,8 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 			// TinyMCE does some shenanigans where they actually put an extra BR in at the end of the block,
 			// for some reason (see "extraBr" in EnterKey.js), so we accept as two BR's "at the end" an
 			// inserted BR with a BR previous sibling and a BR next sibling whose next sibling is null.
-			if (brPrevious && (brPrevious.nodeName === 'BR'))
-			{
-				if (brNext && (brNext.nodeName === 'BR') && (brNext.nextElementSibling == null))
-				{
+			if (brPrevious && (brPrevious.nodeName === 'BR')) {
+				if (brNext && (brNext.nodeName === 'BR') && (brNext.nextElementSibling === null)) {
 					// Zap the two BR nodes that led to this condition, but do so after a delay so
 					// the TinyMCE code that is currently inserting these breaks doesn't hit an exception
 					// trying to work with the added BR
@@ -81,11 +79,15 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 						par.removeChild(second);
 
 						// Now we actually just employ TinyMCE's default shift-return behavior by faking a key event
-						ev = new CustomEvent("keydown", {"keyCode":13, "target":editor});
+						var ev = new CustomEvent("keydown", {"keyCode":13, "target":editor});
 						ev.shiftKey = true;
 						ev.keyCode = 13;
-						ev.isImmediatePropagationStopped = function () { return false; };
-						ev.isDefaultPrevented = function () { return false; };
+						ev.isImmediatePropagationStopped = function () {
+							return false;
+						};
+						ev.isDefaultPrevented = function () {
+							return false;
+						};
 						editor.fire('keydown', ev);
 					}, 0, parent, brPrevious, brNode);
 				}
@@ -94,7 +96,7 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 	}
 
 	// After the editor is done loading, pay attention to node insertions
-	editor.on("init", function (e) {
+	editor.on("init", function (/* unused e */) {
 		editor.getBody().addEventListener("DOMNodeInserted", nodeInserted, false);
 	});
 
