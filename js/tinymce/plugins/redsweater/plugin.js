@@ -23,10 +23,16 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 	editor.on('PreProcess', function(o) {
 		var last = o.node.lastChild;
 
-		// If it's a standalone BR node, or if it's a paragraph with a break node or literal newline in it.
-		if (last && (last.nodeName == "BR" || (last.childNodes.length == 1 &&
-			(last.firstChild.nodeName == 'BR' || last.firstChild.nodeValue == '\u00a0')))) {
-			editor.dom.remove(last);
+		// Various situations end up being reached that should all be treated for our
+		// purposes as "empty" last paragraphs. They can all be summarized as having
+		// the node's innerHTML be comprised entirely of whitespace, <br> tags, and &nbsp;
+		// entities. So to see if this is a node that should be ejected, get the innerHTML
+		// and replace all of those. If we're left with nothing? It's an empty node.
+		if (last) {
+			var thisHTML = last.innerHTML;
+			if (thisHTML.replace(/\s|<br.*>|&nbsp;/g, "").length == 0) {
+				editor.dom.remove(last);
+			}
 		}
 	});
 
