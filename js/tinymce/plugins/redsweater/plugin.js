@@ -36,6 +36,24 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 		}
 	});
 
+	// After TinyMCE sets the content on the editor, we want to patch up
+	// certain HTML quirks that are ill-suited to a good editing experience
+	editor.on("SetContent", function(event) {
+		// Handle situation where blockquotes may have originated without p tags within
+		each(editor.dom.select('blockquote'), function(thisBlockquote) {
+			// WE don't worry about case of no children at all because the node would be culled
+			// by standard setContent deserialization. Just, for each of the children of
+			// a blockquote, if it's not a block node itself, put it in a P block. Bam!
+			each(thisBlockquote.childNodes, function(thisChildNode) {
+				if (editor.dom.isBlock(thisChildNode) == false) {
+					var newParagraph = editor.dom.create("P");
+					thisBlockquote.insertBefore(newParagraph, thisChildNode);
+					newParagraph.appendChild(thisChildNode);
+				}
+			});
+		});
+	});
+
 	// The way TinyMCE handles Bold, Italic, Underline, Underscore, etc. is fundamentally wrong for the way
 	// the Mac behaves in that it aggressively tries to stretch out and affect e.g. the whole word if you are
 	// in the middle of a word like "te|st" where | is the collapsed caret. It would appear the easiest
