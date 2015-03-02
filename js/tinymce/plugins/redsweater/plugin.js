@@ -103,16 +103,14 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 						par.removeChild(second);
 
 						// Now we actually just employ TinyMCE's default shift-return behavior by faking a key event
-						var ev = new CustomEvent("keydown", {"keyCode":13, "target":editor});
-						ev.shiftKey = true;
-						ev.keyCode = 13;
-						ev.isImmediatePropagationStopped = function () {
+						var eventArgs = {"keyCode":13, "target":editor, "shiftKey":true};
+						eventArgs.isImmediatePropagationStopped = function () {
 							return false;
 						};
-						ev.isDefaultPrevented = function () {
+						eventArgs.isDefaultPrevented = function () {
 							return false;
 						};
-						editor.fire('keydown', ev);
+						editor.fire('keydown', eventArgs);
 					}, 0, parent, brPrevious, brNode);
 				}
 			}
