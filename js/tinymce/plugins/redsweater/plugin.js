@@ -30,7 +30,7 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 		// and replace all of those. If we're left with nothing? It's an empty node.
 		if (last) {
 			var thisHTML = last.innerHTML;
-			if (thisHTML.replace(/\s|<br.*>|&nbsp;/g, "").length == 0) {
+			if (thisHTML && (thisHTML.replace(/\s|<br.*>|&nbsp;/g, "").length == 0)) {
 				editor.dom.remove(last);
 			}
 		}
