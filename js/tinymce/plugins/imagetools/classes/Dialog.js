@@ -12,10 +12,10 @@
  * ...
  */
 define("tinymce/imagetoolsplugin/Dialog", [
+	"tinymce/dom/DOMUtils",
 	"tinymce/util/Tools",
 	"tinymce/util/Promise",
 	"tinymce/ui/Factory",
-	"tinymce/ui/Panel",
 	"tinymce/ui/Form",
 	"tinymce/ui/Container",
 	"tinymce/imagetoolsplugin/ImagePanel",
@@ -23,7 +23,7 @@ define("tinymce/imagetoolsplugin/Dialog", [
 	"tinymce/imagetoolsplugin/Filters",
 	"tinymce/imagetoolsplugin/Conversions",
 	"tinymce/imagetoolsplugin/UndoStack"
-], function(Tools, Promise, Factory, Panel, Form, Container, ImagePanel, ImageTools, Filters, Conversions, UndoStack) {
+], function(DOMUtils, Tools, Promise, Factory, Form, Container, ImagePanel, ImageTools, Filters, Conversions, UndoStack) {
 	function createState(blob) {
 		return {
 			blob: blob,
@@ -45,7 +45,31 @@ define("tinymce/imagetoolsplugin/Dialog", [
 		var win, undoStack = new UndoStack(), mainPanel, filtersPanel, tempState,
 			cropPanel, resizePanel, flipRotatePanel, imagePanel, sidePanel, mainViewContainer,
 			invertPanel, brightnessPanel, huePanel, saturatePanel, contrastPanel, grayscalePanel,
-			sepiaPanel, colorizePanel, sharpenPanel, embossPanel, gammaPanel, exposurePanel, panels;
+			sepiaPanel, colorizePanel, sharpenPanel, embossPanel, gammaPanel, exposurePanel, panels,
+			width, height, ratioW, ratioH;
+
+		function recalcSize(e) {
+			var widthCtrl, heightCtrl, newWidth, newHeight;
+
+			widthCtrl = win.find('#w')[0];
+			heightCtrl = win.find('#h')[0];
+
+			newWidth = parseInt(widthCtrl.value(), 10);
+			newHeight = parseInt(heightCtrl.value(), 10);
+
+			if (win.find('#constrain')[0].checked() && width && height && newWidth && newHeight) {
+				if (e.control.settings.name == 'w') {
+					newHeight = Math.round(newWidth * ratioW);
+					heightCtrl.value(newHeight);
+				} else {
+					newWidth = Math.round(newHeight * ratioH);
+					widthCtrl.value(newWidth);
+				}
+			}
+
+			width = newWidth;
+			height = newHeight;
+		}
 
 		function floatToPercent(value) {
 			return Math.round(value * 100) + '%';
@@ -54,6 +78,12 @@ define("tinymce/imagetoolsplugin/Dialog", [
 		function updateButtonUndoStates() {
 			win.find('#undo').disabled(!undoStack.canUndo());
 			win.find('#redo').disabled(!undoStack.canRedo());
+			win.statusbar.find('#save').disabled(!undoStack.canUndo());
+		}
+
+		function disableUndoRedo() {
+			win.find('#undo').disabled(true);
+			win.find('#redo').disabled(true);
 		}
 
 		function displayState(state) {
@@ -119,6 +149,7 @@ define("tinymce/imagetoolsplugin/Dialog", [
 			displayState(currentState);
 			destroyState(tempState);
 			switchPanel(mainPanel)();
+			updateButtonUndoStates();
 		}
 
 		function applyTempState() {
@@ -175,6 +206,7 @@ define("tinymce/imagetoolsplugin/Dialog", [
 				pack: 'center',
 				padding: '0 10 0 10',
 				spacing: 5,
+				flex: 0,
 				minHeight: 60,
 				defaults: {
 					classes: 'imagetool',
@@ -185,16 +217,21 @@ define("tinymce/imagetoolsplugin/Dialog", [
 		}
 
 		function createFilterPanel(title, filter) {
-			function apply() {
-				action(filter)();
-				cancel();
-			}
-
 			return createPanel([
 				{text: 'Back', onclick: cancel},
 				{type: 'spacer', flex: 1},
-				{text: 'Apply', subtype: 'primary', onclick: apply}
-			]).hide();
+				{text: 'Apply', subtype: 'primary', onclick: applyTempState}
+			]).hide().on('show', function() {
+				disableUndoRedo();
+
+				filter(currentState.blob).then(function(blob) {
+					var newTempState = createState(blob);
+
+					displayState(newTempState);
+					destroyState(tempState);
+					tempState = newTempState;
+				});
+			});
 		}
 
 		function createVariableFilterPanel(title, filter, value, min, max) {
@@ -225,6 +262,7 @@ define("tinymce/imagetoolsplugin/Dialog", [
 				{text: 'Apply', subtype: 'primary', onclick: applyTempState}
 			]).hide().on('show', function() {
 				this.find('slider').value(value);
+				disableUndoRedo();
 			});
 		}
 
@@ -263,6 +301,7 @@ define("tinymce/imagetoolsplugin/Dialog", [
 				{text: 'Apply', subtype: 'primary', onclick: applyTempState}
 			]).hide().on('show', function() {
 				win.find('#r,#g,#b').value(1);
+				disableUndoRedo();
 			});
 		}
 
@@ -272,13 +311,21 @@ define("tinymce/imagetoolsplugin/Dialog", [
 			{text: 'Apply', subtype: 'primary', onclick: crop}
 		]).hide().on('show hide', function(e) {
 			imagePanel.toggleCropRect(e.type == 'show');
-		});
+		}).on('show', disableUndoRedo);
+
+		function toggleConstrain(e) {
+			if (e.control.value() === true) {
+				ratioW = height / width;
+				ratioH = width / height;
+			}
+		}
 
 		resizePanel = createPanel([
 			{text: 'Back', onclick: cancel},
 			{type: 'spacer', flex: 1},
-			{type: 'textbox', name: 'w', label: 'Width', size: 4},
-			{type: 'textbox', name: 'h', label: 'Height', size: 4},
+			{type: 'textbox', name: 'w', label: 'Width', size: 4, onkeyup: recalcSize},
+			{type: 'textbox', name: 'h', label: 'Height', size: 4, onkeyup: recalcSize},
+			{type: 'checkbox', name: 'constrain', text: 'Constrain proportions', checked: true, onchange: toggleConstrain},
 			{type: 'spacer', flex: 1},
 			{text: 'Apply', subtype: 'primary', onclick: 'submit'}
 		]).hide().on('submit', function(e) {
@@ -289,18 +336,18 @@ define("tinymce/imagetoolsplugin/Dialog", [
 
 			action(ImageTools.resize, width, height)();
 			cancel();
-		});
+		}).on('show', disableUndoRedo);
 
 		flipRotatePanel = createPanel([
 			{text: 'Back', onclick: cancel},
 			{type: 'spacer', flex: 1},
-			{icon: 'fliph', tooltip: 'Flip H', onclick: tempAction(ImageTools.flip, 'h')},
-			{icon: 'flipv', tooltip: 'Flip V', onclick: tempAction(ImageTools.flip, 'v')},
-			{icon: 'rotateleft', tooltip: 'Rotate left', onclick: tempAction(ImageTools.rotate, -90)},
-			{icon: 'rotateright', tooltip: 'Rotate right', onclick: tempAction(ImageTools.rotate, 90)},
+			{icon: 'fliph', tooltip: 'Flip horizontally', onclick: tempAction(ImageTools.flip, 'h')},
+			{icon: 'flipv', tooltip: 'Flip vertically', onclick: tempAction(ImageTools.flip, 'v')},
+			{icon: 'rotateleft', tooltip: 'Rotate counterclockwise', onclick: tempAction(ImageTools.rotate, -90)},
+			{icon: 'rotateright', tooltip: 'Rotate clockwise', onclick: tempAction(ImageTools.rotate, 90)},
 			{type: 'spacer', flex: 1},
 			{text: 'Apply', subtype: 'primary', onclick: applyTempState}
-		]).hide();
+		]).hide().on('show', disableUndoRedo);
 
 		invertPanel = createFilterPanel("Invert", Filters.invert);
 		sharpenPanel = createFilterPanel("Sharpen", Filters.sharpen);
@@ -319,35 +366,33 @@ define("tinymce/imagetoolsplugin/Dialog", [
 		filtersPanel = createPanel([
 			{text: 'Back', onclick: cancel},
 			{type: 'spacer', flex: 1},
-			{text: 'invert', icon: 'invert', onclick: switchPanel(invertPanel)},
 			{text: 'hue', icon: 'hue', onclick: switchPanel(huePanel)},
 			{text: 'saturate', icon: 'saturate', onclick: switchPanel(saturatePanel)},
 			{text: 'sepia', icon: 'sepia', onclick: switchPanel(sepiaPanel)},
 			{text: 'emboss', icon: 'emboss', onclick: switchPanel(embossPanel)},
-			{text: 'gamma', icon: 'gamma', onclick: switchPanel(gammaPanel)},
 			{text: 'exposure', icon: 'exposure', onclick: switchPanel(exposurePanel)},
 			{type: 'spacer', flex: 1}
 		]).hide();
 
 		mainPanel = createPanel([
-			{tooltip: 'Crop', text2: 'Crop', icon: 'crop', onclick: switchPanel(cropPanel)},
-			{tooltip: 'Resize', text2: 'Resize', icon: 'resize2', onclick: switchPanel(resizePanel)},
-			{tooltip: 'Orientation', text2: 'Resize', icon: 'options', onclick: switchPanel(flipRotatePanel)},
-			{tooltip: 'Brightness', text2: 'Brightness', icon: 'sun', onclick: switchPanel(brightnessPanel)},
-			{tooltip: 'Sharpen', text2: 'Sharpen', icon: 'sharpen', onclick: switchPanel(sharpenPanel)},
-			{tooltip: 'Contrast', text2: 'Contrast', icon: 'contrast', onclick: switchPanel(contrastPanel)},
-			{tooltip: 'Color levels', text2: 'Color levels', icon: 'drop', onclick: switchPanel(colorizePanel)},
-			{text: 'More', onclick: switchPanel(filtersPanel)}
+			{tooltip: 'Crop', icon: 'crop', onclick: switchPanel(cropPanel)},
+			{tooltip: 'Resize', icon: 'resize2', onclick: switchPanel(resizePanel)},
+			{tooltip: 'Orientation', icon: 'orientation', onclick: switchPanel(flipRotatePanel)},
+			{tooltip: 'Brightness', icon: 'sun', onclick: switchPanel(brightnessPanel)},
+			{tooltip: 'Sharpen', icon: 'sharpen', onclick: switchPanel(sharpenPanel)},
+			{tooltip: 'Contrast', icon: 'contrast', onclick: switchPanel(contrastPanel)},
+			{tooltip: 'Color levels', icon: 'drop', onclick: switchPanel(colorizePanel)},
+			{tooltip: 'Gamma', icon: 'gamma', onclick: switchPanel(gammaPanel)},
+			{tooltip: 'Invert', icon: 'invert', onclick: switchPanel(invertPanel)}
+			//{text: 'More', onclick: switchPanel(filtersPanel)}
 		]);
 
 		imagePanel = new ImagePanel({
 			flex: 1,
-			imageSrc: currentState.url,
-			minWidth: 800,
-			minHeight: 600
+			imageSrc: currentState.url
 		});
 
-		sidePanel = new Panel({
+		sidePanel = new Container({
 			layout: 'flex',
 			direction: 'column',
 			border: '0 1 0 0',
@@ -394,12 +439,12 @@ define("tinymce/imagetoolsplugin/Dialog", [
 			layout: 'flex',
 			direction: 'column',
 			align: 'stretch',
-			minWidth: 800,
-			minHeight: 600,
+			minWidth: Math.min(DOMUtils.DOM.getViewPort().w, 800),
+			minHeight: Math.min(DOMUtils.DOM.getViewPort().h, 650),
 			title: 'Edit image',
 			items: panels.concat([mainViewContainer]),
 			buttons: [
-				{text: 'Save', subtype: 'primary', onclick: save},
+				{text: 'Save', name: 'save', subtype: 'primary', onclick: save},
 				{text: 'Cancel', onclick: 'close'}
 			]
 		});
@@ -417,20 +462,19 @@ define("tinymce/imagetoolsplugin/Dialog", [
 		updateButtonUndoStates();
 
 		imagePanel.on('load', function() {
-			win.find('#w').value(imagePanel.imageSize().w);
-			win.find('#h').value(imagePanel.imageSize().h);
+			width = imagePanel.imageSize().w;
+			height = imagePanel.imageSize().h;
+			ratioW = height / width;
+			ratioH = width / height;
+
+			win.find('#w').value(width);
+			win.find('#h').value(height);
 		});
 	}
 
-	function edit(src) {
+	function edit(blob) {
 		return new Promise(function(resolve, reject) {
-			var img = new Image();
-
-			img.src = src;
-
-			Conversions.imageToBlob(img).then(function(blob) {
-				open(createState(blob), resolve, reject);
-			});
+			open(createState(blob), resolve, reject);
 		});
 	}
 

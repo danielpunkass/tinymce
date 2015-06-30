@@ -1,8 +1,8 @@
 /**
  * Editor.js
  *
- * Copyright, Moxiecode Systems AB
  * Released under LGPL License.
+ * Copyright (c) 1999-2015 Ephox Corp. All rights reserved
  *
  * License: http://www.tinymce.com/license
  * Contributing: http://www.tinymce.com/contributing
@@ -93,7 +93,6 @@ define("tinymce/Editor", [
 	 * @param {String} id Unique id for the editor.
 	 * @param {Object} settings Settings for the editor.
 	 * @param {tinymce.EditorManager} editorManager EditorManager instance.
-	 * @author Moxiecode
 	 */
 	function Editor(id, settings, editorManager) {
 		var self = this, documentBaseUrl, baseUri;
@@ -252,6 +251,10 @@ define("tinymce/Editor", [
 
 		if (settings.cache_suffix) {
 			Env.cacheSuffix = settings.cache_suffix.replace(/^[\?\&]+/, '');
+		}
+
+		if (settings.override_viewport === false) {
+			Env.overrideViewPort = false;
 		}
 
 		// Call setup
@@ -1301,14 +1304,26 @@ define("tinymce/Editor", [
 		 * Adds a contextual toolbar to be rendered when the selector matches.
 		 *
 		 * @method addContextToolbar
-		 * @param {String} selector CSS selector to match elements against.
+		 * @param {function/string} predicate Predicate that needs to return true if provided strings get converted into CSS predicates.
 		 * @param {String/Array} items String or array with items to add to the context toolbar.
 		 */
-		addContextToolbar: function(selector, items) {
-			this.contextToolbars = this.contextToolbars || {};
-			this.contextToolbars[selector] = {
+		addContextToolbar: function(predicate, items) {
+			var self = this, selector;
+
+			self.contextToolbars = self.contextToolbars || [];
+
+			// Convert selector to predicate
+			if (typeof predicate == "string") {
+				selector = predicate;
+				predicate = function(elm) {
+					return self.dom.is(elm, selector);
+				};
+			}
+
+			self.contextToolbars.push({
+				predicate: predicate,
 				items: items
-			};
+			});
 		},
 
 		/**
@@ -1596,6 +1611,11 @@ define("tinymce/Editor", [
 
 			if (!args.no_events) {
 				self.fire('SaveContent', args);
+			}
+
+			// Always run this internal event
+			if (args.format == 'raw') {
+				self.fire('RawSaveContent', args);
 			}
 
 			html = args.content;

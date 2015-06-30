@@ -1,8 +1,8 @@
 /**
  * EditorUpload.js
  *
- * Copyright, Moxiecode Systems AB
  * Released under LGPL License.
+ * Copyright (c) 1999-2015 Ephox Corp. All rights reserved
  *
  * License: http://www.tinymce.com/license
  * Contributing: http://www.tinymce.com/contributing
@@ -23,22 +23,25 @@ define("tinymce/EditorUpload", [
 	return function(editor) {
 		var blobCache = new BlobCache();
 
-		function regExpEscape(str) {
-			return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-		}
+		// Replaces strings without regexps to avoid FF regexp to big issue
+		function replaceString(content, search, replace) {
+			var index = 0;
 
-		function replaceAttribValue(content, name, targetValue, newValue) {
-			return content.replace(
-				new RegExp(name + '="' + regExpEscape(targetValue) + '"', 'g'),
-				function() {
-					return name + '="' + newValue + '"';
+			do {
+				index = content.indexOf(search, index);
+
+				if (index !== -1) {
+					content = content.substring(0, index) + replace + content.substr(index + search.length);
+					index += replace.length - search.length + 1;
 				}
-			);
+			} while (index !== -1);
+
+			return content;
 		}
 
 		function replaceImageUrl(content, targetUrl, replacementUrl) {
-			content = replaceAttribValue(content, "src", targetUrl, replacementUrl);
-			content = replaceAttribValue(content, "data-mce-src", targetUrl, replacementUrl);
+			content = replaceString(content, 'src="' + targetUrl + '"', 'src="' + replacementUrl + '"');
+			content = replaceString(content, 'data-mce-src="' + targetUrl + '"', 'data-mce-src="' + replacementUrl + '"');
 
 			return content;
 		}
@@ -71,7 +74,11 @@ define("tinymce/EditorUpload", [
 
 					if (image) {
 						replaceUrlInUndoStack(image.src, uploadInfo.url);
-						image.src = uploadInfo.url;
+
+						editor.$(image).attr({
+							src: uploadInfo.url,
+							'data-mce-src': editor.convertURL(uploadInfo.url, 'src')
+						});
 					}
 
 					return {
@@ -85,6 +92,9 @@ define("tinymce/EditorUpload", [
 				}
 
 				return result;
+			}, function() {
+				// Silent
+				// TODO: Maybe execute some failure callback here?
 			});
 		}
 
@@ -103,18 +113,26 @@ define("tinymce/EditorUpload", [
 			blobCache.destroy();
 		}
 
+		function replaceBlobWithBase64(content) {
+			return content.replace(/src="(blob:[^"]+)"/g, function(match, blobUri) {
+				var blobInfo = blobCache.getByUri(blobUri);
+
+				return 'src="data:' + blobInfo.blob().type + ';base64,' + blobInfo.base64() + '"';
+			});
+		}
+
 		editor.on('setContent paste', scanForImages);
+
+		editor.on('RawSaveContent', function(e) {
+			e.content = replaceBlobWithBase64(e.content);
+		});
 
 		editor.on('getContent', function(e) {
 			if (e.source_view || e.format == 'raw') {
 				return;
 			}
 
-			e.content = e.content.replace(/src="(blob:[^"]+)"/g, function(match, blobUri) {
-				var blobInfo = blobCache.getByUri(blobUri);
-
-				return 'src="data:' + blobInfo.blob().type + ';base64,' + blobInfo.base64() + '"';
-			});
+			e.content = replaceBlobWithBase64(e.content);
 		});
 
 		return {

@@ -33,6 +33,10 @@ define("tinymce/ui/Window", [
 			viewport = $("meta[name=viewport]")[0],
 			contentValue;
 
+		if (Env.overrideViewPort === false) {
+			return;
+		}
+
 		if (!viewport) {
 			viewport = document.createElement('meta');
 			viewport.setAttribute('name', 'viewport');
@@ -128,6 +132,7 @@ define("tinymce/ui/Window", [
 			}
 
 			self.classes.add('window');
+			self.bodyClasses.add('window-body');
 			self.state.set('fixed', true);
 
 			// Create statusbar

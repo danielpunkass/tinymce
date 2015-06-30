@@ -1,11 +1,30 @@
+/**
+ * Plugin.js
+ *
+ * Released under LGPL License.
+ * Copyright (c) 1999-2015 Ephox Corp. All rights reserved
+ *
+ * License: http://www.tinymce.com/license
+ * Contributing: http://www.tinymce.com/contributing
+ */
+
+/**
+ *
+ * Settings:
+ *  imagetools_cors_hosts - Array of remote domains that has CORS setup.
+ *  imagetools_proxy - Url to proxy that streams images from remote host to local host.
+ *  imagetools_toolbar - Toolbar items to render when an editable image is selected.
+ */
 define("tinymce/imagetoolsplugin/Plugin", [
 	"tinymce/PluginManager",
 	"tinymce/Env",
 	"tinymce/util/Promise",
+	"tinymce/util/URI",
+	"tinymce/util/Tools",
 	"tinymce/imagetoolsplugin/ImageTools",
 	"tinymce/imagetoolsplugin/Conversions",
 	"tinymce/imagetoolsplugin/Dialog"
-], function(PluginManager, Env, Promise, ImageTools, Conversions, Dialog) {
+], function(PluginManager, Env, Promise, URI, Tools, ImageTools, Conversions, Dialog) {
 	PluginManager.add('imagetools', function(editor) {
 		var count = 0;
 
@@ -48,12 +67,118 @@ define("tinymce/imagetoolsplugin/Plugin", [
 		}
 		*/
 
+		function getImageSize(img) {
+			var width, height;
+
+			function isPxValue(value) {
+				return value.indexOf('px') == value.length - 2;
+			}
+
+			width = img.style.width;
+			height = img.style.height;
+			if (width || height) {
+				if (isPxValue(width) && isPxValue(height)) {
+					return {
+						w: parseInt(width, 10),
+						h: parseInt(height, 10)
+					};
+				}
+
+				return null;
+			}
+
+			width = editor.$(img).attr('width');
+			height = editor.$(img).attr('height');
+			if (width && height) {
+				return {
+					w: parseInt(width, 10),
+					h: parseInt(height, 10)
+				};
+			}
+
+			return null;
+		}
+
+		function setImageSize(img, size) {
+			var width, height;
+
+			if (size) {
+				width = img.style.width;
+				height = img.style.height;
+
+				if (width || height) {
+					editor.$(img).css({
+						width: size.w,
+						height: size.h
+					}).removeAttr('data-mce-style');
+				}
+
+				width = img.width;
+				height = img.height;
+
+				if (width || height) {
+					editor.$(img).attr({
+						width: size.w,
+						height: size.h
+					});
+				}
+			}
+		}
+
+		function getNaturalImageSize(img) {
+			return {
+				w: img.naturalWidth,
+				h: img.naturalHeight
+			};
+		}
+
 		function getSelectedImage() {
 			return editor.selection.getNode();
 		}
 
 		function createId() {
 			return 'imagetools' + count++;
+		}
+
+		function isLocalImage(img) {
+			var url = img.src;
+
+			return url.indexOf('data:') === 0 || url.indexOf('blob:') === 0 || new URI(url).host === editor.documentBaseURI.host;
+		}
+
+		function isCorsImage(img) {
+			return Tools.inArray(editor.settings.imagetools_cors_hosts, new URI(img.src).host) !== -1;
+		}
+
+		function requestUrlAsBlob(url) {
+			// Needs to be XHR for IE 10 compatibility
+			return new Promise(function(resolve) {
+				var xhr = new XMLHttpRequest();
+
+				xhr.onload = function() {
+					resolve(this.response);
+				};
+
+				xhr.open('GET', url, true);
+				xhr.responseType = 'blob';
+				xhr.send();
+			});
+		}
+
+		function imageToBlob(img) {
+			var src = img.src;
+
+			if (isCorsImage(img)) {
+				return requestUrlAsBlob(img.src);
+			}
+
+			if (!isLocalImage(img)) {
+				img = new Image();
+				src = editor.settings.imagetools_proxy;
+				img.src += (src.indexOf('?') === -1 ? '?' : '&') + 'url=' + encodeURIComponent(img.src);
+			}
+
+			return Conversions.imageToBlob(img);
 		}
 
 		function findSelectedBlobInfo() {
@@ -64,7 +189,7 @@ define("tinymce/imagetoolsplugin/Plugin", [
 				return blobInfo;
 			}
 
-			return Conversions.imageToBlob(getSelectedImage()).then(function(blob) {
+			return imageToBlob(getSelectedImage()).then(function(blob) {
 				return Conversions.blobToBase64(blob).then(function(base64) {
 					var blobCache = editor.editorUpload.blobCache;
 					var blobInfo = blobCache.create(createId(), blob, base64);
@@ -81,16 +206,22 @@ define("tinymce/imagetoolsplugin/Plugin", [
 				selectedImage = getSelectedImage();
 				id = createId();
 				blobCache = editor.editorUpload.blobCache;
-				base64 = dataUri;
+				base64 = URI.parseDataUri(dataUri).data;
 
 				blobInfo = blobCache.create(id, blob, base64);
 				blobCache.add(blobInfo);
 
 				editor.undoManager.transact(function() {
+					function imageLoadedHandler() {
+						editor.$(selectedImage).off('load', imageLoadedHandler);
+						editor.nodeChanged();
+					}
+
+					editor.$(selectedImage).on('load', imageLoadedHandler);
+
 					editor.$(selectedImage).attr({
-						src: blobInfo.blobUri(),
-						"data-mce-src": blobInfo.blobUri()
-					});
+						src: blobInfo.blobUri()
+					}).removeAttr('data-mce-src');
 				});
 
 				return blobInfo;
@@ -106,10 +237,14 @@ define("tinymce/imagetoolsplugin/Plugin", [
 		function rotate(angle) {
 			return function() {
 				return selectedImageOperation(function(blobInfo) {
-					editor.$(getSelectedImage()).attr({
-						width: getSelectedImage().height,
-						height: getSelectedImage().width
-					});
+					var size = getImageSize(getSelectedImage());
+
+					if (size) {
+						setImageSize(getSelectedImage(), {
+							w: size.h,
+							h: size.w
+						});
+					}
 
 					return ImageTools.rotate(blobInfo.blob(), angle);
 				})();
@@ -125,10 +260,25 @@ define("tinymce/imagetoolsplugin/Plugin", [
 		}
 
 		function editImageDialog() {
-			var img = getSelectedImage();
+			var img = getSelectedImage(), originalSize = getNaturalImageSize(img);
 
 			if (img) {
-				Dialog.edit(img.src).then(updateSelectedImage, function() {});
+				imageToBlob(img).then(Dialog.edit).then(function(blob) {
+					return new Promise(function(resolve) {
+						Conversions.blobToImage(blob).then(function(newImage) {
+							var newSize = getNaturalImageSize(newImage);
+
+							if (originalSize.w != newSize.w || originalSize.h != newSize.h) {
+								if (getImageSize(img)) {
+									setImageSize(img, newSize);
+								}
+							}
+
+							URL.revokeObjectURL(newImage.src);
+							resolve(blob);
+						});
+					});
+				}).then(updateSelectedImage, function() {});
 			}
 		}
 
@@ -172,6 +322,12 @@ define("tinymce/imagetoolsplugin/Plugin", [
 			*/
 		}
 
+		function isEditableImage(img) {
+			var selectorMatched = editor.dom.is(img, 'img:not([data-mce-object],[data-mce-placeholder])');
+
+			return selectorMatched && (isLocalImage(img) || isCorsImage(img) || editor.settings.imagetools_proxy);
+		}
+
 		function addToolbars() {
 			var toolbarItems = editor.settings.imagetools_toolbar;
 
@@ -180,7 +336,7 @@ define("tinymce/imagetoolsplugin/Plugin", [
 			}
 
 			editor.addContextToolbar(
-				'img:not([data-mce-object],[data-mce-placeholder])',
+				isEditableImage,
 				toolbarItems
 			);
 		}
