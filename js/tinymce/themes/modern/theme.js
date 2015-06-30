@@ -11,7 +11,8 @@
 /*global tinymce:true */
 
 tinymce.ThemeManager.add('modern', function(editor) {
-	var self = this, settings = editor.settings, Factory = tinymce.ui.Factory, each = tinymce.each, DOM = tinymce.DOM;
+	var self = this, settings = editor.settings, Factory = tinymce.ui.Factory,
+		each = tinymce.each, DOM = tinymce.DOM, Rect = tinymce.ui.Rect;
 
 	// Default menus
 	var defaultMenus = {
@@ -371,7 +372,11 @@ tinymce.ThemeManager.add('modern', function(editor) {
 	 * Handles contextual toolbars.
 	 */
 	function addContextualToolbars() {
-		var scrollContainer, contextToolbars = {};
+		var scrollContainer;
+
+		function getContextToolbars() {
+			return editor.contextToolbars || {};
+		}
 
 		function getElementRect(elm) {
 			var pos, targetRect, root;
@@ -392,35 +397,81 @@ tinymce.ThemeManager.add('modern', function(editor) {
 			return targetRect;
 		}
 
+		function hideAllFloatingPanels() {
+			each(editor.contextToolbars, function(toolbar) {
+				if (toolbar.panel) {
+					toolbar.panel.hide();
+				}
+			});
+		}
+
 		function reposition(match) {
-			var relPos, panelRect, elementRect, contentAreaRect, panel, relRect;
+			var relPos, panelRect, elementRect, contentAreaRect, panel, relRect, testPositions;
 
 			if (!match || !match.toolbar.panel) {
+				hideAllFloatingPanels();
 				return;
 			}
+
+			testPositions = [
+				'tc-bc', 'bc-tc',
+				'tl-bl', 'bl-tl',
+				'tr-br', 'br-tr'
+			];
 
 			panel = match.toolbar.panel;
 			panel.show();
 
 			elementRect = getElementRect(match.element);
-			elementRect.y -= 7;
-			elementRect.h += 14;
-
 			panelRect = tinymce.DOM.getRect(panel.getEl());
 			contentAreaRect = tinymce.DOM.getRect(editor.getContentAreaContainer() || editor.getBody());
 
-			relPos = tinymce.ui.Rect.findBestRelativePosition(panelRect, elementRect, contentAreaRect, [
-				'tc-bc', 'bc-tc',
-				'tl-bl', 'bl-tl',
-				'tr-br', 'br-tr'
-			]);
+			if (!editor.inline) {
+				contentAreaRect.w = editor.getDoc().documentElement.offsetWidth;
+			}
+
+			// Inflate the elementRect so it doesn't get placed above resize handles
+			if (editor.selection.controlSelection.isResizable(match.element)) {
+				elementRect = Rect.inflate(elementRect, 0, 7);
+			}
+
+			relPos = Rect.findBestRelativePosition(panelRect, elementRect, contentAreaRect, testPositions);
 
 			if (relPos) {
-				relRect = tinymce.ui.Rect.relativePosition(panelRect, elementRect, relPos);
+				each(testPositions.concat('inside'), function(pos) {
+					panel.classes.toggle('tinymce-inline-' + pos, pos == relPos);
+				});
+
+				relRect = Rect.relativePosition(panelRect, elementRect, relPos);
 				panel.moveTo(relRect.x, relRect.y);
 			} else {
-				panel.hide();
+				each(testPositions, function(pos) {
+					panel.classes.toggle('tinymce-inline-' + pos, false);
+				});
+
+				panel.classes.toggle('tinymce-inline-inside', true);
+
+				elementRect = Rect.intersect(contentAreaRect, elementRect);
+
+				if (elementRect) {
+					relPos = Rect.findBestRelativePosition(panelRect, elementRect, contentAreaRect, [
+						'tc-tc', 'tl-tl', 'tr-tr'
+					]);
+
+					if (relPos) {
+						relRect = Rect.relativePosition(panelRect, elementRect, relPos);
+						panel.moveTo(relRect.x, relRect.y);
+					} else {
+						panel.moveTo(elementRect.x, elementRect.y);
+					}
+				} else {
+					panel.hide();
+				}
 			}
+
+			//drawRect(contentAreaRect, 'blue');
+			//drawRect(elementRect, 'red');
+			//drawRect(panelRect, 'green');
 		}
 
 		function repositionHandler() {
@@ -463,13 +514,13 @@ tinymce.ThemeManager.add('modern', function(editor) {
 				items: createToolbar(match.toolbar.items)
 			});
 
-			contextToolbars[match.selector].panel = panel;
+			getContextToolbars()[match.selector].panel = panel;
 			panel.renderTo(document.body).reflow();
 			reposition(match);
 		}
 
 		function hideAllContextToolbars() {
-			tinymce.each(contextToolbars, function(toolbar) {
+			tinymce.each(getContextToolbars(), function(toolbar) {
 				if (toolbar.panel) {
 					toolbar.panel.hide();
 				}
@@ -481,10 +532,10 @@ tinymce.ThemeManager.add('modern', function(editor) {
 
 			parentsAndSelf = editor.$(targetElm).parents().add(targetElm);
 			for (i = parentsAndSelf.length - 1; i >= 0; i--) {
-				for (selector in contextToolbars) {
+				for (selector in getContextToolbars()) {
 					if (editor.dom.is(parentsAndSelf[i], selector)) {
 						return {
-							toolbar: contextToolbars[selector],
+							toolbar: getContextToolbars()[selector],
 							selector: selector,
 							element: parentsAndSelf[i]
 						};
@@ -494,10 +545,6 @@ tinymce.ThemeManager.add('modern', function(editor) {
 
 			return null;
 		}
-
-		contextToolbars.img = {
-			items: 'bold italic underline | alignleft aligncenter alignright alignfull'
-		};
 
 		editor.on('click keyup blur', function() {
 			// Needs to be delayed to avoid Chrome img focus out bug
@@ -525,16 +572,19 @@ tinymce.ThemeManager.add('modern', function(editor) {
 			}
 		});
 
-		editor.on('nodeChange', repositionHandler);
+		editor.on('nodeChange ResizeEditor', repositionHandler);
+		tinymce.$(window).on('resize', repositionHandler);
 
 		editor.on('remove', function() {
-			tinymce.each(contextToolbars, function(toolbar) {
+			tinymce.$(window).off('resize', repositionHandler);
+
+			tinymce.each(getContextToolbars(), function(toolbar) {
 				if (toolbar.panel) {
 					toolbar.panel.remove();
 				}
 			});
 
-			contextToolbars = [];
+			editor.contextToolbars = {};
 		});
 	}
 
@@ -577,7 +627,10 @@ tinymce.ThemeManager.add('modern', function(editor) {
 
 		function hide() {
 			if (panel) {
+				//We require two events as the inline float panel based toolbar does not have autohide=true
 				panel.hide();
+				//All other autohidden float panels will be closed below.
+				panel.hideAll();
 				DOM.removeClass(editor.getBody(), 'mce-edit-focus');
 			}
 		}

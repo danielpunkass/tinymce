@@ -479,7 +479,7 @@ define("tinymce/Editor", [
 			var w, h, minHeight, n, o, Theme, url, bodyId, bodyClass, re, i, initializedPlugins = [];
 
 			this.editorManager.i18n.setCode(settings.language);
-			self.rtl = this.editorManager.i18n.rtl;
+			self.rtl = settings.rtl_ui || this.editorManager.i18n.rtl;
 			self.editorManager.add(self);
 
 			settings.aria_label = settings.aria_label || DOM.getAttrib(elm, 'aria-label', self.getLang('aria.rich_text_area'));
@@ -1295,6 +1295,20 @@ define("tinymce/Editor", [
 
 			self.menuItems = self.menuItems || {};
 			self.menuItems[name] = settings;
+		},
+
+		/**
+		 * Adds a contextual toolbar to be rendered when the selector matches.
+		 *
+		 * @method addContextToolbar
+		 * @param {String} selector CSS selector to match elements against.
+		 * @param {String/Array} items String or array with items to add to the context toolbar.
+		 */
+		addContextToolbar: function(selector, items) {
+			this.contextToolbars = this.contextToolbars || {};
+			this.contextToolbars[selector] = {
+				items: items
+			};
 		},
 
 		/**
