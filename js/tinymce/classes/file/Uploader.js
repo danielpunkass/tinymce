@@ -32,14 +32,27 @@ define("tinymce/file/Uploader", [
 	"tinymce/util/Tools"
 ], function(Promise, Tools) {
 	return function(settings) {
-		function blobInfoToData(blobInfo) {
-			var fileName = "x";
+		function fileName(blobInfo) {
+			var ext, extensions;
 
+			extensions = {
+				'image/jpeg': 'jpg',
+				'image/jpg': 'jpg',
+				'image/gif': 'gif',
+				'image/png': 'png'
+			};
+
+			ext = extensions[blobInfo.blob().type.toLowerCase()] || 'dat';
+
+			return blobInfo.id() + '.' + ext;
+		}
+
+		function blobInfoToData(blobInfo) {
 			return {
 				id: blobInfo.id,
 				blob: blobInfo.blob,
 				base64: blobInfo.base64,
-				filename: Tools.constant(fileName)
+				filename: Tools.constant(fileName(blobInfo))
 			};
 		}
 
@@ -69,14 +82,14 @@ define("tinymce/file/Uploader", [
 			};
 
 			formData = new FormData();
-			formData.append('file', blobInfo.blob());
+			formData.append('file', blobInfo.blob(), fileName(blobInfo));
 
 			xhr.send(formData);
 		}
 
 		function upload(blobInfos) {
 			return new Promise(function(resolve) {
-				var handler = settings.handler, queue, index = 0;
+				var handler = settings.handler, queue, index = 0, uploadedIdMap = {};
 
 				queue = Tools.map(blobInfos, function(blobInfo) {
 					return {
@@ -87,14 +100,24 @@ define("tinymce/file/Uploader", [
 				});
 
 				function uploadNext() {
-					var queueItem = queue[index++];
+					var previousResult, queueItem = queue[index++];
 
 					if (!queueItem) {
 						resolve(queue);
 						return;
 					}
 
+					// Only upload unique blob once
+					previousResult = uploadedIdMap[queueItem.blobInfo.id()];
+					if (previousResult) {
+						queueItem.url = previousResult;
+						queueItem.status = true;
+						uploadNext();
+						return;
+					}
+
 					handler(blobInfoToData(queueItem.blobInfo), function(url) {
+						uploadedIdMap[queueItem.blobInfo.id()] = url;
 						queueItem.url = url;
 						queueItem.status = true;
 						uploadNext();
