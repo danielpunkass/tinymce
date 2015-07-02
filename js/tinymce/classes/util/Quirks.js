@@ -557,10 +557,12 @@ define("tinymce/util/Quirks", [
 
 			editor.addCommand('Delete', function() {
 				customDelete();
+				editor.undoManager.add();
 			});
 
 			editor.addCommand('ForwardDelete', function() {
 				customDelete(true);
+				editor.undoManager.add();
 			});
 
 			// Older WebKits doesn't properly handle the clipboard so we can't add the rest
@@ -611,6 +613,16 @@ define("tinymce/util/Quirks", [
 					// This is ugly but not sure how to work around it otherwise
 					window.setTimeout(function() {
 						customDelete(true);
+
+						// Work around a problem in which changes made e.g. with Cmd-X cut on
+						// a Mac will not be restored properly because an undo level is not
+						// added for the state of the document after the cut is made. On TinyMCE
+						// 3 this case was handled as a consequence of command keys not being
+						// filtered in the event handler that set UndoManager's "typing" state
+						// to true. In TinyMCE 4 the logic is corrected but a side effect is undo
+						// doesn't work reliably for these edits that "sneak by" the TinyMCE editor.
+						// http://www.tinymce.com/develop/bugtracker_view.php?id=7584
+						editor.undoManager.add();
 					}, 0);
 				}
 			});
