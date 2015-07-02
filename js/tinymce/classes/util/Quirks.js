@@ -556,11 +556,13 @@ define("tinymce/util/Quirks", [
 			});
 
 			editor.addCommand('Delete', function() {
+				editor.undoManager.beforeChange();
 				customDelete();
 				editor.undoManager.add();
 			});
 
 			editor.addCommand('ForwardDelete', function() {
+				editor.undoManager.beforeChange();			
 				customDelete(true);
 				editor.undoManager.add();
 			});
@@ -612,6 +614,8 @@ define("tinymce/util/Quirks", [
 					// Nested delete/forwardDelete not allowed on execCommand("cut")
 					// This is ugly but not sure how to work around it otherwise
 					window.setTimeout(function() {
+						editor.undoManager.beforeChange();
+
 						customDelete(true);
 
 						// Work around a problem in which changes made e.g. with Cmd-X cut on

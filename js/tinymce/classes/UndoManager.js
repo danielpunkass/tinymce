@@ -226,8 +226,12 @@ define("tinymce/UndoManager", [
 				}
 
 				// Set before bookmark on previous level
-				if (data[index]) {
+				if (data[index] && beforeBookmark) {
 					data[index].beforeBookmark = beforeBookmark;
+
+					// Clear it out so we don't set it again if we e.g. have an add that doesn't correlate to
+					// a beforeBookmark setting.
+					beforeBookmark = null;
 				}
 
 				// Time to compress
@@ -288,7 +292,10 @@ define("tinymce/UndoManager", [
 					}
 
 					editor.setContent(level.content, {format: 'raw'});
-					editor.selection.moveToBookmark(level.beforeBookmark);
+
+					if (level.beforeBookmark != null) {
+						editor.selection.moveToBookmark(level.beforeBookmark);
+					}
 
 					editor.fire('undo', {level: level});
 				}
