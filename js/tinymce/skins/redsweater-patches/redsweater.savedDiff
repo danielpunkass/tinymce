@@ -1,0 +1,28 @@
+From 424e4e3590913101a47986fcd0fe43a11367580a Mon Sep 17 00:00:00 2001
+From: Daniel Jalkut <jalkut@red-sweater.com>
+Date: Sat, 24 May 2014 15:15:19 -0400
+Subject: [PATCH] Disable selection highlighting of clicked images as the
+ resize handles do a good enough job of indicating selection.
+
+---
+ js/tinymce/skins/redsweater/Content.less | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/js/tinymce/skins/redsweater/Content.less b/js/tinymce/skins/redsweater/Content.less
+index ecde687..f828292 100644
+--- a/js/tinymce/skins/redsweater/Content.less
++++ b/js/tinymce/skins/redsweater/Content.less
+@@ -77,3 +77,10 @@ td, pre {margin:8px;}
+ 	font-family:"Lucida Grande";
+ 	-webkit-user-select:none;
+ }
++
++/* Style the image resizing/editing controls to suit us */
++
++// Avoid selection indicator when focused on an image
++img::selection {
++	background-color: transparent;
++}
+-- 
+2.3.7 (Apple Git-57)
+

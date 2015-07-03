@@ -1,0 +1,42 @@
+From e58c09320b0500fe952b547c02f30f9c8b8f9a9b Mon Sep 17 00:00:00 2001
+From: Daniel Jalkut <jalkut@red-sweater.com>
+Date: Tue, 20 May 2014 21:18:55 -0400
+Subject: [PATCH] We don't want fonts explicitly specified in our skin.
+
+---
+ js/tinymce/skins/redsweater/Content.less | 12 ------------
+ 1 file changed, 12 deletions(-)
+
+diff --git a/js/tinymce/skins/redsweater/Content.less b/js/tinymce/skins/redsweater/Content.less
+index 0a5ce34..ecde687 100644
+--- a/js/tinymce/skins/redsweater/Content.less
++++ b/js/tinymce/skins/redsweater/Content.less
+@@ -1,13 +1,6 @@
+ /* Content.less */
+ 
+-@font-family: Verdana, Arial, Helvetica, sans-serif;
+-@font-size: 11px;
+-
+ body {
+-	background-color: #FFFFFF;
+-	color: #000000;
+-	font-family: @font-family;
+-	font-size: @font-size;
+ 	scrollbar-3dlight-color: #F0F0EE;
+ 	scrollbar-arrow-color: #676662;
+ 	scrollbar-base-color: #F0F0EE;
+@@ -18,11 +11,6 @@ body {
+ 	scrollbar-track-color: #F5F5F5;
+ }
+ 
+-td, th {
+-	font-family: @font-family;
+-	font-size: @font-size;
+-}
+-
+ @import "Content.Objects.less";
+ 
+ /* Stylize blockquotes in the editor so they are more obvious to the user */
+-- 
+2.3.7 (Apple Git-57)
+
