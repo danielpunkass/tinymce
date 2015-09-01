@@ -25,7 +25,15 @@
 		content_css: "css/development.css",
 		add_unload_trigger: false,
 		height: 600,
-		toolbar1: "undo redo | styleselect | alignleft aligncenter alignright alignjustify | link image | media | emoticons"
+		toolbar1: "undo redo | styleselect | alignleft aligncenter alignright alignjustify | link image | media | emoticons",
+		images_upload_handler: function(data, success, failure) {
+			console.log('blob upload [started]', data.id());
+
+			setTimeout(function() {
+				console.log('blob upload [ended]', data.id());
+				success(data.id() + '.png');
+			}, 1000);
+		}
 	});
 
 	function send() {
@@ -35,8 +43,10 @@
 	}
 
 	function upload() {
+		console.log('upload [started]');
+
 		tinymce.activeEditor.uploadImages(function(success) {
-			console.log(success);
+			console.log('upload [ended]', success);
 		});
 	}
 
@@ -61,7 +71,7 @@
 		</p>
 	</textarea>
 
-	<input type="button"value="Submit" onclick="send()" />
+	<input type="button" value="Submit" onclick="send()" />
 	<input type="button" value="Dump" onclick="dump()" />
 	<input type="button" value="Upload" onclick="upload()" />
 </form>

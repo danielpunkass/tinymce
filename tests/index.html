@@ -19,6 +19,7 @@
 
 	<script src="http://www.google.com/jsapi"></script>
 	<script>google.load("jquery", "1");</script>
+	<script src="js/module_loader.js"></script>
 	<script src="js/qunit/qunit.js"></script>
 	<script src="js/tinymce_loader.js"></script>
 	<script src="../js/tinymce/classes/jquery.tinymce.js"></script>
@@ -29,8 +30,12 @@
 	<script src="redsweater/UndoManager.js"></script>
 	<script src="redsweater/Quirks.js"></script>
 
+	<!-- tinymce.data.* -->
+	<script src="tinymce/data/ObservableObject.js"></script>
+
 	<!-- tinymce.file.* -->
 	<script src="tinymce/file/Conversions.js"></script>
+	<script src="tinymce/file/ImageScanner.js"></script>
 
 	<!-- tinymce.dom.* -->
 	<script src="tinymce/dom/DomQuery.js"></script>
