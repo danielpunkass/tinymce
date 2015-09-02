@@ -38,7 +38,7 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 
 	// After TinyMCE sets the content on the editor, we want to patch up
 	// certain HTML quirks that are ill-suited to a good editing experience
-	editor.on("SetContent", function(event) {
+	editor.on("SetContent", function(/* unused event */) {
 		// Handle situation where blockquotes may have originated without p tags within
 		each(editor.dom.select('blockquote'), function(thisBlockquote) {
 			// WE don't worry about case of no children at all because the node would be culled
@@ -62,7 +62,7 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 	// implementors of these commands, and pass them through to the browser on our own.
 
 	var overrideCommands = ["Bold", "Italic", "Underline", "Underscore", "Superscript", "Subscript"];
-	each(overrideCommands, function (commandName) {
+	each(overrideCommands, function(commandName) {
 		editor.addCommand(commandName, function(ui, val) {
 			var browserSuccess = editor.getDoc().execCommand(commandName, ui, val);
 
@@ -98,16 +98,16 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 					// Zap the two BR nodes that led to this condition, but do so after a delay so
 					// the TinyMCE code that is currently inserting these breaks doesn't hit an exception
 					// trying to work with the added BR
-					window.setTimeout(function (par, first, second) {
+					window.setTimeout(function(par, first, second) {
 						par.removeChild(first);
 						par.removeChild(second);
 
 						// Now we actually just employ TinyMCE's default shift-return behavior by faking a key event
-						var eventArgs = {"keyCode":13, "target":editor, "shiftKey":true};
-						eventArgs.isImmediatePropagationStopped = function () {
+						var eventArgs = {"keyCode": 13, "target": editor, "shiftKey": true};
+						eventArgs.isImmediatePropagationStopped = function() {
 							return false;
 						};
-						eventArgs.isDefaultPrevented = function () {
+						eventArgs.isDefaultPrevented = function() {
 							return false;
 						};
 						editor.fire('keydown', eventArgs);
@@ -118,12 +118,12 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 	}
 
 	// After the editor is done loading, pay attention to node insertions
-	editor.on("init", function (/* unused e */) {
+	editor.on("init", function(/* unused e */) {
 		editor.getBody().addEventListener("DOMNodeInserted", nodeInserted, false);
 	});
 
-//	editor.on("change", function(nodeChangeEvent) {
-//		var theElement = nodeChangeEvent.element;
-//		console.log("Got node change on " + theElement.nodeName);
-//	});
+	//	editor.on("change", function(nodeChangeEvent) {
+	//		var theElement = nodeChangeEvent.element;
+	//		console.log("Got node change on " + theElement.nodeName);
+	//	});
 });

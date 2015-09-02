@@ -569,7 +569,7 @@ define("tinymce/util/Quirks", [
 			});
 
 			editor.addCommand('ForwardDelete', function() {
-				editor.undoManager.beforeChange();			
+				editor.undoManager.beforeChange();
 				customDelete(true);
 				editor.undoManager.add();
 			});
