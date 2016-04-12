@@ -61,17 +61,19 @@ tinymce.PluginManager.add('redsweater', function(editor) {
 	// did previously with "sendToBrowser" intercepts in TinyMCE3, is to register ourselves as the
 	// implementors of these commands, and pass them through to the browser on our own.
 
-	var overrideCommands = ["Bold", "Italic", "Underline", "Underscore", "Superscript", "Subscript"];
-	each(overrideCommands, function(commandName) {
-		editor.addCommand(commandName, function(ui, val) {
-			var browserSuccess = editor.getDoc().execCommand(commandName, ui, val);
-
-			// The TinyMCE logic is backwards and expects to return false if it should return
-			// true on our behalf...
-			return (browserSuccess === false);
-		});
-	});
-
+//	var overrideCommands = ["Bold", "Italic", "Underline", "Underscore", "Superscript", "Subscript"];
+//	each(overrideCommands, function(commandName) {
+//		editor.addCommand(commandName, function(ui, val) {
+//			var browserSuccess = editor.getDoc().execCommand(commandName, ui, val);
+//
+//			editor.nodeChanged();
+//
+//			// The TinyMCE logic is backwards and expects to return false if it should return
+//			// true on our behalf...
+//			return (browserSuccess === false);
+//		});
+//	});
+//
 	// In TinyMCE3 we suffered the terrible behavior of PRE blocks that return would add a new PRE block so that
 	// there was a long string of them. They've fixed that in TinyMCE4 however the behavior is now such that
 	// carriage returns map to <br /> by default, making it impossible to get out intuititively. Until we support
