@@ -34,10 +34,10 @@ define("tinymce/dom/ControlSelection", [
 		// Details about each resize handle how to scale etc
 		resizeHandles = {
 			// Name: x multiplier, y multiplier, delta size x, delta size y
-			/*n: [0.5, 0, 0, -1],
+			n: [0.5, 0, 0, -1],
 			e: [1, 0.5, 1, 0],
 			s: [0.5, 1, 0, 1],
-			w: [0, 0.5, -1, 0],*/
+			w: [0, 0.5, -1, 0],
 			nw: [0, 0, -1, -1],
 			ne: [1, 0, 1, -1],
 			se: [1, 1, 1, 1],
@@ -317,12 +317,16 @@ define("tinymce/dom/ControlSelection", [
 						dom.remove(handleElm);
 					}
 
+					// Use bidirectional cursors since most things e.g. images can be resized either direction.
+					var cursorList = {'nw': 'nwse-resize', 'n': 'ns-resize', 'ne': 'nesw-resize',
+									'w': 'ew-resize', 'e': 'ew-resize',
+									'sw': 'nesw-resize', 's': 'ns-resize', 'se': 'nwse-resize'};
 					handleElm = dom.add(rootElement, 'div', {
 						id: 'mceResizeHandle' + name,
 						'data-mce-bogus': 'all',
 						'class': 'mce-resizehandle',
 						unselectable: true,
-						style: 'cursor:' + name + '-resize; margin:0; padding:0'
+						style: 'cursor:' + cursorList[name] + '; margin:0; padding:0'
 					});
 
 					// Hides IE move layer cursor
