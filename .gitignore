@@ -4,6 +4,7 @@ tmp
 .settings
 .idea
 .project
+.vscode
 *.sublime-*
 .externalToolBuilders
 *~
@@ -12,6 +13,7 @@ tmp
 *.bak
 *.log
 *.swp
+yarn.lock
 .DS_Store
 .project
 node_modules
@@ -21,10 +23,19 @@ js/tinymce/plugins/table/plugin.js
 js/tinymce/plugins/spellchecker/plugin.js
 js/tinymce/plugins/paste/plugin.js
 js/tinymce/plugins/imagetools/plugin.js
+js/tinymce/plugins/media/plugin.js
+js/tinymce/plugins/wordcount/plugin.js
 js/tinymce/plugins/codesample/plugin.js
+js/tinymce/themes/inlite/theme.js
+js/tinymce/themes/modern/theme.js
 imagemanager
 filemanager
 mcmanager
+powerpaste
+tinymcespellchecker
+a11ychecker
+codemirror
+mentions
 *.min.js
 *.dev.js
 *.full.js
@@ -36,3 +47,5 @@ skin.ie7.dev.less
 **/bolt/bootstrap*.js
 **/dist
 **/scratch
+**/lib
+**/dependency

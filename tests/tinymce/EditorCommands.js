@@ -87,6 +87,15 @@ test('mceInsertContent HR at end of H1 with inline elements with P sibling', fun
 	equal(getContent(), '<h1><strong>abc</strong></h1><hr /><p>def</p>');
 });
 
+test('mceInsertContent empty block', function() {
+	editor.setContent('<h1>abc</h1>');
+	Utils.setSelection('h1', 1);
+	editor.execCommand('mceInsertContent', false, '<p></p>');
+	equal(editor.selection.getNode(), editor.getBody().childNodes[1]);
+	equal(editor.selection.getNode().nodeName, 'P');
+	equal(getContent(), '<h1>a</h1><p>\u00a0</p><h1>bc</h1>');
+});
+
 test('mceInsertContent table at end of H1 with P sibling', function() {
 	editor.setContent('<h1>abc</h1><p>def</p>');
 	Utils.setSelection('h1', 3);
@@ -741,6 +750,13 @@ test('unlink', function() {
 	equal(editor.getContent(), '<p>test 123</p>');
 });
 
+test('unlink - unselected a[href] with childNodes', function() {
+	editor.setContent('<p><a href="test"><strong><em>test</em></strong></a></p>');
+	Utils.setSelection('em', 0);
+	editor.execCommand('unlink');
+	equal(editor.getContent(), '<p><strong><em>test</em></strong></p>');
+});
+
 test('subscript/superscript', function() {
 	expect(4);
 
@@ -792,6 +808,33 @@ test('indent/outdent', function() {
 	editor.execCommand('SelectAll');
 	editor.execCommand('Outdent');
 	equal(editor.getContent(), '<p>test 123</p>');
+});
+
+test('indent/outdent table always uses margin', function () {
+	expect(4);
+
+	editor.setContent('<table><tbody><tr><td>test</td></tr></tbody></table>');
+	editor.execCommand('SelectAll');
+	editor.execCommand('Indent');
+	equal(editor.getContent(), '<table style="margin-left: 30px;"><tbody><tr><td>test</td></tr></tbody></table>');
+
+	editor.setContent('<table><tbody><tr><td>test</td></tr></tbody></table>');
+	editor.execCommand('SelectAll');
+	editor.execCommand('Indent');
+	editor.execCommand('Indent');
+	equal(editor.getContent(), '<table style="margin-left: 60px;"><tbody><tr><td>test</td></tr></tbody></table>');
+
+	editor.setContent('<table><tbody><tr><td>test</td></tr></tbody></table>');
+	editor.execCommand('SelectAll');
+	editor.execCommand('Indent');
+	editor.execCommand('Indent');
+	editor.execCommand('Outdent');
+	equal(editor.getContent(), '<table style="margin-left: 30px;"><tbody><tr><td>test</td></tr></tbody></table>');
+
+	editor.setContent('<table><tbody><tr><td>test</td></tr></tbody></table>');
+	editor.execCommand('SelectAll');
+	editor.execCommand('Outdent');
+	equal(editor.getContent(), '<table><tbody><tr><td>test</td></tr></tbody></table>');
 });
 
 test('RemoveFormat', function() {
