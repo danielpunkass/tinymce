@@ -330,16 +330,9 @@ define("tinymce/SelectionOverrides", [
 		}
 
 		function showBlockCaretContainer(blockCaretContainer) {
-			blockCaretContainer = $(blockCaretContainer);
-
-			if (blockCaretContainer.attr('data-mce-caret')) {
-				blockCaretContainer.removeAttr('data-mce-caret');
-				blockCaretContainer.removeAttr('data-mce-bogus');
-				blockCaretContainer.removeAttr('style');
-				blockCaretContainer.removeAttr('_moz_abspos');
-
-				// Removes control rect on IE
-				setRange(getRange());
+			if (blockCaretContainer.hasAttribute('data-mce-caret')) {
+				CaretContainer.showCaretContainerBlock(blockCaretContainer);
+				setRange(getRange()); // Removes control rect on IE
 				scrollIntoView(blockCaretContainer[0]);
 			}
 		}
@@ -590,7 +583,7 @@ define("tinymce/SelectionOverrides", [
 				}
 			});
 
-			editor.on('blur', function () {
+			editor.on('blur NewBlock', function () {
 				removeContentEditableSelection();
 				hideFakeCaret();
 			});
@@ -749,7 +742,7 @@ define("tinymce/SelectionOverrides", [
 					return;
 				}
 
-				if (blockCaretContainer.innerHTML != '&nbsp;') {
+				if (CaretContainer.hasContent(blockCaretContainer)) {
 					showBlockCaretContainer(blockCaretContainer);
 				}
 			}
@@ -858,6 +851,7 @@ define("tinymce/SelectionOverrides", [
 				rootClass + ' .mce-offscreen-selection {' +
 					'position: absolute;' +
 					'left: -9999999999px;' +
+					'max-width: 1000000px;' +
 				'}' +
 				rootClass + ' *[contentEditable=false] {' +
 					'cursor: default;' +
@@ -962,6 +956,7 @@ define("tinymce/SelectionOverrides", [
 			editor.$('*[data-mce-selected]').removeAttr('data-mce-selected');
 			node.setAttribute('data-mce-selected', 1);
 			selectedContentEditableNode = node;
+			hideFakeCaret();
 
 			return range;
 		}

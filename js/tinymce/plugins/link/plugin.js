@@ -58,6 +58,12 @@ tinymce.PluginManager.add('link', function(editor) {
 		return false;
 	}
 
+	function appendClickRemove(link, evt) {
+		document.body.appendChild(link);
+		link.dispatchEvent(evt);
+		document.body.removeChild(link);
+	}
+
 	function openDetachedWindow(url) {
 		// Chrome and Webkit has implemented noopener and works correctly with/without popup blocker
 		// Firefox has it implemented noopener but when the popup blocker is activated it doesn't work
@@ -70,8 +76,9 @@ tinymce.PluginManager.add('link', function(editor) {
 			link.rel = 'noreferrer noopener';
 
 			var evt = document.createEvent('MouseEvents');
-			evt.initMouseEvent('click', true, true, window, true, 0, 0, 0, 0, false, false, false, false, 0, null);
-			link.dispatchEvent(evt);
+			evt.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+
+			appendClickRemove(link, evt);
 		} else {
 			var win = window.open('', '_blank');
 			if (win) {
@@ -274,6 +281,10 @@ tinymce.PluginManager.add('link', function(editor) {
 			return true;
 		}
 
+		function onBeforeCall(e) {
+			e.meta = win.toJSON();
+		}
+
 		selectedElm = selection.getNode();
 		anchorElm = dom.getParent(selectedElm, 'a[href]');
 		onlyText = isOnlyTextSelected();
@@ -395,7 +406,8 @@ tinymce.PluginManager.add('link', function(editor) {
 					autofocus: true,
 					label: 'Url',
 					onchange: urlChange,
-					onkeyup: updateText
+					onkeyup: updateText,
+					onbeforecall: onBeforeCall
 				},
 				textListCtrl,
 				linkTitleCtrl,

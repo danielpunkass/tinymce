@@ -34,17 +34,18 @@ asynctest('browser.core.SubmitTest', [
 			sTestEmbedContentSubmit(ui, editor, apis, 'https://www.youtube.com/watch?v=IcgmSRJHu_8',
 			'<p><span id="fake">https://www.youtube.com/watch?v=IcgmSRJHu_8</span></p>'),
 			apis.sSetContent(''),
-			Utils.sSetSetting(editor.settings, 'media_embed_handler', function (data, resolve) {
+			Utils.sSetSetting(editor.settings, 'media_url_resolver', function (data, resolve) {
 				resolve({html: ''});
 			}),
 			sTestEmbedContentSubmit(ui, editor, apis, 'https://www.youtube.com/watch?v=IcgmSRJHu_8',
-			'<p><iframe src="//www.youtube.com/embed/IcgmSRJHu_8" width="560" height="314" allowfullscreen="allowfullscreen"></iframe></p>'),
+			'<p><iframe src="//www.youtube.com/embed/IcgmSRJHu_8" width="560" height="314" ' +
+				'allowfullscreen="allowfullscreen"></iframe></p>'),
 			apis.sSetContent('')
 		], onSuccess, onFailure);
 	}, {
 		plugins: ["media"],
 		toolbar: "media",
-		media_embed_handler: function (data, resolve) {
+		media_url_resolver: function (data, resolve) {
 			setTimeout(function () {
 				resolve({
 					html: '<span id="fake">' + data.url + '</span>'

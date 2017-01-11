@@ -351,10 +351,11 @@ define("tinymce/util/Quirks", [
 					}
 				}
 
-				caretNode = RangeUtils.getNode(rng.startContainer, rng.startOffset);
+				caretNode = RangeUtils.getNode(container, offset);
 				textBlock = dom.getParent(caretNode, dom.isBlock);
 				targetCaretNode = findCaretNode(editor.getBody(), isForward, caretNode);
 				targetTextBlock = dom.getParent(targetCaretNode, dom.isBlock);
+				var isAfter = container.nodeType === 1 && offset > container.childNodes.length - 1;
 
 				if (!caretNode || !targetCaretNode) {
 					return rng;
@@ -377,7 +378,11 @@ define("tinymce/util/Quirks", [
 						}
 
 						if (caretNode.nodeType == 1) {
-							rng.setEnd(caretNode, 0);
+							if (isAfter) {
+								rng.setEndAfter(caretNode);
+							} else {
+								rng.setEndBefore(caretNode);
+							}
 						} else {
 							rng.setEndBefore(caretNode);
 						}
@@ -1654,18 +1659,7 @@ define("tinymce/util/Quirks", [
 		}
 
 		function refreshContentEditable() {
-			var body, parent;
-
-			// Check if the editor was hidden and the re-initialize contentEditable mode by removing and adding the body again
-			if (isHidden()) {
-				body = editor.getBody();
-				parent = body.parentNode;
-
-				parent.removeChild(body);
-				parent.appendChild(body);
-
-				body.focus();
-			}
+			// No-op since Mozilla seems to have fixed the caret repaint issues
 		}
 
 		function isHidden() {
@@ -1690,8 +1684,12 @@ define("tinymce/util/Quirks", [
 				var rng = editor.selection.getRng();
 				var startCaretPos = CaretPosition.fromRangeStart(rng);
 				var endCaretPos = CaretPosition.fromRangeEnd(rng);
+				var prev = caretWalker.prev(startCaretPos);
+				var next = caretWalker.next(endCaretPos);
 
-				return !editor.selection.isCollapsed() && !caretWalker.prev(startCaretPos) && !caretWalker.next(endCaretPos);
+				return !editor.selection.isCollapsed() &&
+					(!prev || prev.isAtStart()) &&
+					(!next || (next.isAtEnd() && startCaretPos.getNode() !== next.getNode()));
 			}
 
 			// Type over case delete and insert this won't cover typeover with a IME but at least it covers the common case

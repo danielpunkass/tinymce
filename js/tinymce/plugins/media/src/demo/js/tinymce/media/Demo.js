@@ -19,14 +19,14 @@ define("tinymce.media.Demo", [
 		tinymce.init({
 			selector: "textarea.tinymce",
 			theme: "modern",
-			plugins: ["media"],
-			toolbar: "media",
-			height: 600,
+			plugins: "media code preview",
+			toolbar: "media code preview",
 			// media_live_embeds: false,
-			// media_embed_handler: function (data, resolve) {
+			// media_url_resolver: function (data, resolve) {
 			// 	resolve({
 			// 		html: '<iframe src="' + data.url + '" width="560" height="314" allowfullscreen="allowfullscreen"></iframe>'});
-			// }
+			// },
+			height: 600
 		});
 	};
 });

@@ -106,6 +106,13 @@
 		deepEqual(countNodes(root), {body:1, pre:1, span:1, '#text':3}, 'Whitespace around and inside PRE (count)');
 	});
 
+	test('Whitespace preserved in code', function() {
+		parser = new tinymce.html.DomParser({}, schema);
+		root = parser.parse('<code>  a  </code>');
+		equal(serializer.serialize(root), '<code>  a  </code>', 'Whitespace inside code');
+		deepEqual(countNodes(root), {body:1, code:1, '#text':1}, 'Whitespace inside code (count)');
+	});
+
 	test('Parse invalid contents', function() {
 		var parser, root;
 
@@ -508,6 +515,14 @@
 		parser = new tinymce.html.DomParser({}, schema);
 		root = parser.parse('<ul><li></li></ul><ul><li> </li></ul>');
 		equal(serializer.serialize(root), '');
+	});
+
+	test('Padd empty with br', function() {
+		var schema = new tinymce.html.Schema();
+		var parser = new tinymce.html.DomParser({padd_empty_with_br: true}, schema);
+		var serializer = new tinymce.html.Serializer({padd_empty_with_br: true}, schema);
+		var root = parser.parse('<p>a</p><p></p>');
+		equal(serializer.serialize(root), '<p>a</p><p><br /></p>');
 	});
 
 	test('Preserve space in inline span', function() {

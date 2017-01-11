@@ -117,7 +117,7 @@ define("tinymce/fmt/Preview", [
 
 
 	function selectorToHtml(selector, editor) {
-		return parsedSelectorToHtml(parseSelector(selector, editor));
+		return parsedSelectorToHtml(parseSelector(selector), editor);
 	}
 
 
@@ -130,34 +130,36 @@ define("tinymce/fmt/Preview", [
 
 		item = obj.selector = Tools.trim(item);
 
-		// matching IDs, CLASSes, ATTRIBUTES and PSEUDOs
-		tagName = item.replace(/(?:([#\.]|::?)([\w\-]+)|(\[)([^\]]+)\]?)/g, function($0, $1, $2, $3, $4) {
-			switch ($1) {
-				case '#':
-					obj.attrs.id = $2;
-					break;
+		if (item !== '*') {
+			// matching IDs, CLASSes, ATTRIBUTES and PSEUDOs
+			tagName = item.replace(/(?:([#\.]|::?)([\w\-]+)|(\[)([^\]]+)\]?)/g, function($0, $1, $2, $3, $4) {
+				switch ($1) {
+					case '#':
+						obj.attrs.id = $2;
+						break;
 
-				case '.':
-					obj.classes.push($2);
-					break;
+					case '.':
+						obj.classes.push($2);
+						break;
 
-				case ':':
-					if (Tools.inArray('checked disabled enabled read-only required'.split(' '), $2) !== -1) {
-						obj.attrs[$2] = $2;
-					}
-					break;
-			}
-
-			// atribute matched
-			if ($3 == '[') {
-				var m = $4.match(/([\w\-]+)(?:\=\"([^\"]+))?/);
-				if (m) {
-					obj.attrs[m[1]] = m[2];
+					case ':':
+						if (Tools.inArray('checked disabled enabled read-only required'.split(' '), $2) !== -1) {
+							obj.attrs[$2] = $2;
+						}
+						break;
 				}
-			}
 
-			return '';
-		});
+				// atribute matched
+				if ($3 == '[') {
+					var m = $4.match(/([\w\-]+)(?:\=\"([^\"]+))?/);
+					if (m) {
+						obj.attrs[m[1]] = m[2];
+					}
+				}
+
+				return '';
+			});
+		}
 
 		obj.name = tagName || 'div';
 		return obj;
@@ -201,7 +203,7 @@ define("tinymce/fmt/Preview", [
 		}
 
 		// Default preview
-		if (!previewStyles) {
+		if (typeof previewStyles !== 'string') {
 			previewStyles = 'font-family font-size font-weight font-style text-decoration ' +
 				'text-transform color background-color border border-radius outline text-shadow';
 		}
@@ -238,9 +240,9 @@ define("tinymce/fmt/Preview", [
 				items[0].name = name;
 			}
 			name = format.selector;
-			previewFrag = parsedSelectorToHtml(items);
+			previewFrag = parsedSelectorToHtml(items, editor);
 		} else {
-			previewFrag = parsedSelectorToHtml([name]);
+			previewFrag = parsedSelectorToHtml([name], editor);
 		}
 
 		previewElm = dom.select(name, previewFrag)[0] || previewFrag.firstChild;

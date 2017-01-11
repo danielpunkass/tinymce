@@ -21,6 +21,7 @@ module.exports = function(grunt) {
 			plugins: [
 				"js/tinymce/plugins/*/plugin.js",
 				"js/tinymce/plugins/*/classes/**/*.js",
+				"js/tinymce/plugins/*/src/**/*.js",
 				"!js/tinymce/plugins/paste/plugin.js",
 				"!js/tinymce/plugins/table/plugin.js",
 				"!js/tinymce/plugins/spellchecker/plugin.js",
@@ -368,7 +369,12 @@ module.exports = function(grunt) {
 		uglify: {
 			options: {
 				beautify: {
-					ascii_only: true
+					ascii_only: true,
+					screw_ie8: false
+				},
+
+				compress: {
+					screw_ie8: false
 				}
 			},
 
@@ -437,9 +443,9 @@ module.exports = function(grunt) {
 						"js/**/src",
 						"js/**/plugin.js",
 						"js/**/theme.js",
-						"js/*.less",
-						"js/*.dev.svg",
-						"js/*.dev.js",
+						"js/**/*.less",
+						"js/**/*.dev.svg",
+						"js/**/*.dev.js",
 						"js/tinymce/tinymce.full.min.js",
 						"js/tinymce/plugins/moxiemanager",
 						"js/tinymce/plugins/compat3x",
@@ -883,6 +889,33 @@ module.exports = function(grunt) {
 				tasks: ["less"],
 				options: {
 					spawn: false
+				}
+			}
+		},
+
+		bedrock: {
+			all: {
+				options: {
+					config: 'tools/bolt/config/browser.js',
+					testdirs: [
+						'js/tinymce/plugins/media/src/test',
+						'js/tinymce/plugins/wordcount/src/test',
+						'js/tinymce/themes/inlite/src/test',
+						'js/tinymce/themes/modern/src/test'
+					]
+				}
+			}
+		},
+
+		dent: {
+			all: {
+				options: {
+					dirs: [
+						'js/tinymce/plugins/media',
+						'js/tinymce/plugins/wordcount',
+						'js/tinymce/themes/inlite',
+						'js/tinymce/themes/modern'
+					]
 				}
 			}
 		}

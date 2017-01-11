@@ -25,21 +25,36 @@ tinymce.PluginManager.add('anchor', function(editor) {
 		};
 	};
 
+	var isValidId = function (id) {
+		// Follows HTML4 rules: https://www.w3.org/TR/html401/types.html#type-id
+		return /^[A-Za-z][A-Za-z0-9\-:._]*$/.test(id);
+	};
+
 	var showDialog = function () {
-		var selectedNode = editor.selection.getNode(), name = '';
+		var selectedNode = editor.selection.getNode();
 		var isAnchor = selectedNode.tagName == 'A' && editor.dom.getAttrib(selectedNode, 'href') === '';
+		var value = '';
 
 		if (isAnchor) {
-			name = selectedNode.name || selectedNode.id || '';
+			value = selectedNode.id || selectedNode.name || '';
 		}
 
 		editor.windowManager.open({
 			title: 'Anchor',
-			body: {type: 'textbox', name: 'name', size: 40, label: 'Name', value: name},
+			body: {type: 'textbox', name: 'id', size: 40, label: 'Id', value: value},
 			onsubmit: function(e) {
-				var id = e.data.name;
+				var id = e.data.id;
+
+				if (!isValidId(id)) {
+					e.preventDefault();
+					editor.windowManager.alert(
+						'Id should start with a letter, followed only by letters, numbers, dashes, dots, colons or underscores.'
+					);
+					return;
+				}
 
 				if (isAnchor) {
+					selectedNode.removeAttribute('name');
 					selectedNode.id = id;
 				} else {
 					editor.selection.collapse(true);
