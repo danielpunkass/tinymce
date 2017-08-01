@@ -535,6 +535,7 @@ module.exports = function (grunt) {
       'paste-plugin': { path: 'src/plugins/paste' },
       'preview-plugin': { path: 'src/plugins/preview' },
       'print-plugin': { path: 'src/plugins/print' },
+      'redsweater-plugin': { path: 'src/plugins/redsweater' },
       'save-plugin': { path: 'src/plugins/save' },
       'searchreplace-plugin': { path: 'src/plugins/searchreplace' },
       'spellchecker-plugin': { path: 'src/plugins/spellchecker' },
@@ -549,7 +550,8 @@ module.exports = function (grunt) {
       'wordcount-plugin': { path: 'src/plugins/wordcount' },
       'inlite-theme': { path: 'src/themes/inlite' },
       'modern-theme': { path: 'src/themes/modern' },
-      'lightgray-skin': { path: 'src/skins/lightgray' }
+      'lightgray-skin': { path: 'src/skins/lightgray' },
+      'redsweater-skin': { path: 'src/skins/redsweater' }
     },
 
     copy: {
