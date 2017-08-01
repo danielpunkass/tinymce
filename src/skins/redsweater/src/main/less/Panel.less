@@ -1,7 +1,8 @@
 // Panel
 
 .@{prefix}-panel {
-  border: 0 solid mix(rgb(red(@panel-border), green(@panel-border), blue(@panel-border)), @panel-bg, 20%); 
+  /* Override annoying top border on the editor's container - for our use we don't want any artificial borders */
+  border: none;
   border: 0 solid @panel-border;
   .vertical-gradient(@panel-bg, @panel-bg-hlight);
 }
