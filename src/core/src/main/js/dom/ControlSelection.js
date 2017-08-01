@@ -353,16 +353,16 @@ define(
             }
 
             // Use bidirectional cursors since most things e.g. images can be resized either direction.
-            var cursorList = {'nw': 'nwse-resize', 'n': 'ns-resize', 'ne': 'nesw-resize',
-                    'w': 'ew-resize', 'e': 'ew-resize',
-                    'sw': 'nesw-resize', 's': 'ns-resize', 'se': 'nwse-resize'};
+            var cursorList = { 'nw': 'nwse-resize', 'n': 'ns-resize', 'ne': 'nesw-resize',
+              'w': 'ew-resize', 'e': 'ew-resize',
+              'sw': 'nesw-resize', 's': 'ns-resize', 'se': 'nwse-resize' };
 
             handleElm = dom.add(rootElement, 'div', {
               id: 'mceResizeHandle' + name,
               'data-mce-bogus': 'all',
               'class': 'mce-resizehandle',
               unselectable: true,
-              style: 'cursor:' + name + '-resize; margin:0; padding:0'
+              style: 'cursor:' + cursorList[name] + '; margin:0; padding:0'
             });
 
             // Hides IE move layer cursor

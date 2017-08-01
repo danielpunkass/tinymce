@@ -646,7 +646,7 @@ define(
         // be added.
         var allowShortcut = false;
         if (allowShortcut) {
-                this.shortcuts.add(pattern, desc, cmdFunc, scope);
+          this.shortcuts.add(pattern, desc, cmdFunc, scope);
         }
       },
 

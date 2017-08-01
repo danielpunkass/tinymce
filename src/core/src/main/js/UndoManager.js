@@ -209,7 +209,7 @@ define(
 
 					// Clear it out so we don't set it again if we e.g. have an add that doesn't correlate to
 					// a beforeBookmark setting.
-					beforeBookmark = null;
+          beforeBookmark = null;
           if (lastLevel && Levels.isEq(lastLevel, level)) {
             return null;
           }

@@ -703,15 +703,15 @@ define(
                   textNode = new Node('#text', 3);
                   textNode.value = value;
                   textNode.raw = true;
-				editor.undoManager.beforeChange();
+                  editor.undoManager.beforeChange();
                   node.append(textNode);
-				editor.undoManager.add();
+                  editor.undoManager.add();
                 }
               }
             }
-				editor.undoManager.beforeChange();
+            editor.undoManager.beforeChange();
           });
-				editor.undoManager.add();
+          editor.undoManager.add();
         }
       }
 

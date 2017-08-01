@@ -313,9 +313,6 @@ define(
 
         // Non pixel value, then force offset/clientWidth
         if (w.indexOf('px') === -1) {
-		DOM.setStyle('test', 'fontSize', '24')
-		equal(DOM.getStyle('test', 'fontSize'), '24px');
-
           w = 0;
         }
 
