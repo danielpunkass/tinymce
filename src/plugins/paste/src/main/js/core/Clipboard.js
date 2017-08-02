@@ -103,6 +103,12 @@ define(
        * instead of the current editor selection element.
        */
       function createPasteBin() {
+        // Don't need or want pastebins on redsweater branch because they cause unwanted
+        // interactions with our own paste variants that happen to trigger the special case
+        // pastebin code. I don't think pastebin functionality every legitimately helps us
+        // in the native Mac WebKit scenario any longer.
+        return;
+
         var dom = editor.dom, body = editor.getBody();
         var viewport = editor.dom.getViewPort(editor.getWin()), scrollTop = viewport.y, top = 20;
         var scrollContainer;
