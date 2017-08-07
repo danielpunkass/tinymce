@@ -249,9 +249,14 @@ define("tinymce/InsertContent", [
 		if (!selection.isCollapsed()) {
 			// Fix for #2595 seems that delete removes one extra character on
 			// WebKit for some odd reason if you double click select a word
-			editor.selection.setRng(editor.selection.getRng());
-			editor.getDoc().execCommand('Delete', false, null);
-			trimNbspAfterDeleteAndPaddValue();
+
+			// On WebKit this has repercussions because the Delete command can be
+			// quite aggressive, for example it will delete a second bookmark span,
+			// wreaking havoc with custom attempts to get and restore a bookmark e.g.
+			// around a mceInsertContent command invocation.
+//			editor.selection.setRng(editor.selection.getRng());
+//			editor.getDoc().execCommand('Delete', false, null);
+//			trimNbspAfterDeleteAndPaddValue();
 		}
 
 		parentNode = selection.getNode();
