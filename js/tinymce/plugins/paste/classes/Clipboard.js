@@ -553,6 +553,20 @@ define("tinymce/pasteplugin/Clipboard", [
 				return lastRng || editor.selection.getRng();
 			};
 
+			// If the command being executed is literally PasteAsPlainText then trigger the
+			// plain text option until further notice. This works around a bug in which the
+			// command is not handled correctly on Mac if the keyboard shortcut is not pressed when invoking it.
+			function isPastePlainTextCommand(command) {
+				return (command.toLowerCase() === "pasteasplaintext");
+			}
+
+			editor.on('BeforeExecCommand', function (e) {
+				if (isPastePlainTextCommand(e.command)) {
+					self.pasteFormat = "text";
+				}
+				return true;
+			});
+
 			editor.on('paste', function(e) {
 				// Getting content from the Clipboard can take some time
 				var clipboardTimer = new Date().getTime();
@@ -562,6 +576,8 @@ define("tinymce/pasteplugin/Clipboard", [
 				var isKeyBoardPaste = (new Date().getTime() - keyboardPasteTimeStamp - clipboardDelay) < 1000;
 				var plainTextMode = self.pasteFormat == "text" || keyboardPastePlainTextState;
 
+				// Reset ephemeral flags
+				self.pasteFormat = undefined;
 				keyboardPastePlainTextState = false;
 
 				if (e.isDefaultPrevented() || isBrokenAndroidClipboardEvent(e)) {
