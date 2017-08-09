@@ -21,11 +21,11 @@ blockquote {
 	padding-left: 10px;
 }
 
-/* Very important for the body to have 0 margin so it doesn't accept drags e.g. of URLs */
-/* But there should be some padding to avoid text runnning flush up against the edge. */
+/* Give the body some margin ... using margin instead of padding prevents the rich editor */
+/* from ever adding a glitchy insertion cursor outside the bounds of normal editing area. */
 body {
-	margin:0;
-	padding:10px;
+	margin:10px;
+	padding:0px;
 }
 
 /* First paragraph in the body should run flush against the top */
