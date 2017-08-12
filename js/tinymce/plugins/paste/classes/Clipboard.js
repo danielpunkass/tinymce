@@ -123,117 +123,117 @@ define("tinymce/pasteplugin/Clipboard", [
 			// in the native Mac WebKit scenario any longer.
 			return;
 
-			var dom = editor.dom, body = editor.getBody();
-			var viewport = editor.dom.getViewPort(editor.getWin()), scrollTop = viewport.y, top = 20;
-			var scrollContainer;
-
-			lastRng = editor.selection.getRng();
-
-			if (editor.inline) {
-				scrollContainer = editor.selection.getScrollContainer();
-
-				// Can't always rely on scrollTop returning a useful value.
-				// It returns 0 if the browser doesn't support scrollTop for the element or is non-scrollable
-				if (scrollContainer && scrollContainer.scrollTop > 0) {
-					scrollTop = scrollContainer.scrollTop;
-				}
-			}
-
-			/**
-			 * Returns the rect of the current caret if the caret is in an empty block before a
-			 * BR we insert a temporary invisible character that we get the rect this way we always get a proper rect.
-			 *
-			 * TODO: This might be useful in core.
-			 */
-			function getCaretRect(rng) {
-				var rects, textNode, node, container = rng.startContainer;
-
-				rects = rng.getClientRects();
-				if (rects.length) {
-					return rects[0];
-				}
-
-				if (!rng.collapsed || container.nodeType != 1) {
-					return;
-				}
-
-				node = container.childNodes[lastRng.startOffset];
-
-				// Skip empty whitespace nodes
-				while (node && node.nodeType == 3 && !node.data.length) {
-					node = node.nextSibling;
-				}
-
-				if (!node) {
-					return;
-				}
-
-				// Check if the location is |<br>
-				// TODO: Might need to expand this to say |<table>
-				if (node.tagName == 'BR') {
-					textNode = dom.doc.createTextNode('\uFEFF');
-					node.parentNode.insertBefore(textNode, node);
-
-					rng = dom.createRng();
-					rng.setStartBefore(textNode);
-					rng.setEndAfter(textNode);
-
-					rects = rng.getClientRects();
-					dom.remove(textNode);
-				}
-
-				if (rects.length) {
-					return rects[0];
-				}
-			}
-
-			// Calculate top cordinate this is needed to avoid scrolling to top of document
-			// We want the paste bin to be as close to the caret as possible to avoid scrolling
-			if (lastRng.getClientRects) {
-				var rect = getCaretRect(lastRng);
-
-				if (rect) {
-					// Client rects gets us closes to the actual
-					// caret location in for example a wrapped paragraph block
-					top = scrollTop + (rect.top - dom.getPos(body).y);
-				} else {
-					top = scrollTop;
-
-					// Check if we can find a closer location by checking the range element
-					var container = lastRng.startContainer;
-					if (container) {
-						if (container.nodeType == 3 && container.parentNode != body) {
-							container = container.parentNode;
-						}
-
-						if (container.nodeType == 1) {
-							top = dom.getPos(container, scrollContainer || body).y;
-						}
-					}
-				}
-			}
-
-			// Create a pastebin
-			pasteBinElm = dom.add(editor.getBody(), 'div', {
-				id: "mcepastebin",
-				contentEditable: true,
-				"data-mce-bogus": "all",
-				style: 'position: absolute; top: ' + top + 'px;' +
-					'width: 10px; height: 10px; overflow: hidden; opacity: 0'
-			}, pasteBinDefaultContent);
-
-			// Move paste bin out of sight since the controlSelection rect gets displayed otherwise on IE and Gecko
-			if (Env.ie || Env.gecko) {
-				dom.setStyle(pasteBinElm, 'left', dom.getStyle(body, 'direction', true) == 'rtl' ? 0xFFFF : -0xFFFF);
-			}
-
-			// Prevent focus events from bubbeling fixed FocusManager issues
-			dom.bind(pasteBinElm, 'beforedeactivate focusin focusout', function(e) {
-				e.stopPropagation();
-			});
-
-			pasteBinElm.focus();
-			editor.selection.select(pasteBinElm, true);
+//			var dom = editor.dom, body = editor.getBody();
+//			var viewport = editor.dom.getViewPort(editor.getWin()), scrollTop = viewport.y, top = 20;
+//			var scrollContainer;
+//
+//			lastRng = editor.selection.getRng();
+//
+//			if (editor.inline) {
+//				scrollContainer = editor.selection.getScrollContainer();
+//
+//				// Can't always rely on scrollTop returning a useful value.
+//				// It returns 0 if the browser doesn't support scrollTop for the element or is non-scrollable
+//				if (scrollContainer && scrollContainer.scrollTop > 0) {
+//					scrollTop = scrollContainer.scrollTop;
+//				}
+//			}
+//
+//			/**
+//			 * Returns the rect of the current caret if the caret is in an empty block before a
+//			 * BR we insert a temporary invisible character that we get the rect this way we always get a proper rect.
+//			 *
+//			 * TODO: This might be useful in core.
+//			 */
+//			function getCaretRect(rng) {
+//				var rects, textNode, node, container = rng.startContainer;
+//
+//				rects = rng.getClientRects();
+//				if (rects.length) {
+//					return rects[0];
+//				}
+//
+//				if (!rng.collapsed || container.nodeType != 1) {
+//					return;
+//				}
+//
+//				node = container.childNodes[lastRng.startOffset];
+//
+//				// Skip empty whitespace nodes
+//				while (node && node.nodeType == 3 && !node.data.length) {
+//					node = node.nextSibling;
+//				}
+//
+//				if (!node) {
+//					return;
+//				}
+//
+//				// Check if the location is |<br>
+//				// TODO: Might need to expand this to say |<table>
+//				if (node.tagName == 'BR') {
+//					textNode = dom.doc.createTextNode('\uFEFF');
+//					node.parentNode.insertBefore(textNode, node);
+//
+//					rng = dom.createRng();
+//					rng.setStartBefore(textNode);
+//					rng.setEndAfter(textNode);
+//
+//					rects = rng.getClientRects();
+//					dom.remove(textNode);
+//				}
+//
+//				if (rects.length) {
+//					return rects[0];
+//				}
+//			}
+//
+//			// Calculate top cordinate this is needed to avoid scrolling to top of document
+//			// We want the paste bin to be as close to the caret as possible to avoid scrolling
+//			if (lastRng.getClientRects) {
+//				var rect = getCaretRect(lastRng);
+//
+//				if (rect) {
+//					// Client rects gets us closes to the actual
+//					// caret location in for example a wrapped paragraph block
+//					top = scrollTop + (rect.top - dom.getPos(body).y);
+//				} else {
+//					top = scrollTop;
+//
+//					// Check if we can find a closer location by checking the range element
+//					var container = lastRng.startContainer;
+//					if (container) {
+//						if (container.nodeType == 3 && container.parentNode != body) {
+//							container = container.parentNode;
+//						}
+//
+//						if (container.nodeType == 1) {
+//							top = dom.getPos(container, scrollContainer || body).y;
+//						}
+//					}
+//				}
+//			}
+//
+//			// Create a pastebin
+//			pasteBinElm = dom.add(editor.getBody(), 'div', {
+//				id: "mcepastebin",
+//				contentEditable: true,
+//				"data-mce-bogus": "all",
+//				style: 'position: absolute; top: ' + top + 'px;' +
+//					'width: 10px; height: 10px; overflow: hidden; opacity: 0'
+//			}, pasteBinDefaultContent);
+//
+//			// Move paste bin out of sight since the controlSelection rect gets displayed otherwise on IE and Gecko
+//			if (Env.ie || Env.gecko) {
+//				dom.setStyle(pasteBinElm, 'left', dom.getStyle(body, 'direction', true) == 'rtl' ? 0xFFFF : -0xFFFF);
+//			}
+//
+//			// Prevent focus events from bubbeling fixed FocusManager issues
+//			dom.bind(pasteBinElm, 'beforedeactivate focusin focusout', function(e) {
+//				e.stopPropagation();
+//			});
+//
+//			pasteBinElm.focus();
+//			editor.selection.select(pasteBinElm, true);
 		}
 
 		/**
