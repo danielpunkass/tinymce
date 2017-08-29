@@ -119,7 +119,7 @@ define("tinymce/pasteplugin/Clipboard", [
 		function createPasteBin() {
 			// Don't need or want pastebins on redsweater branch because they cause unwanted
 			// interactions with our own paste variants that happen to trigger the special case
-			// pastebin code. I don't think pastebin functionality every legitimately helps us
+			// pastebin code. I don't think pastebin functionality ever legitimately helps us
 			// in the native Mac WebKit scenario any longer.
 			return;
 
@@ -612,6 +612,9 @@ define("tinymce/pasteplugin/Clipboard", [
 					e.preventDefault();
 					insertClipboardContent(clipboardContent, isKeyBoardPaste, plainTextMode);
 				} else {
+					// Since we never use the pastebin on Red Sweater branch, we want to prevent the default in both cases
+					// to avoid a double-paste behavior.
+					e.preventDefault();
 					Delay.setEditorTimeout(editor, function() {
 						insertClipboardContent(clipboardContent, isKeyBoardPaste, plainTextMode);
 					}, 0);
