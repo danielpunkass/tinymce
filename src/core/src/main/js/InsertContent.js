@@ -277,9 +277,9 @@ define(
 //    if (!selection.isCollapsed()) {
          // Fix for #2595 seems that delete removes one extra character on
          // WebKit for some odd reason if you double click select a word
-         editor.selection.setRng(RangeNormalizer.normalize(editor.selection.getRng()));
-         editor.getDoc().execCommand('Delete', false, null);
-         trimNbspAfterDeleteAndPaddValue();
+        editor.selection.setRng(RangeNormalizer.normalize(editor.selection.getRng()));
+        editor.getDoc().execCommand('Delete', false, null);
+        trimNbspAfterDeleteAndPaddValue();
       }
 
       parentNode = selection.getNode();

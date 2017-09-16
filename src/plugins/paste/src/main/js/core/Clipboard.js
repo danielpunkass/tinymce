@@ -362,14 +362,14 @@ define(
         // plain text option until further notice. This works around a bug in which the
         // command is not handled correctly on Mac if the keyboard shortcut is not pressed when invoking it.
         function isPastePlainTextCommand(command) {
-           return (command.toLowerCase() === "pasteasplaintext");
+          return (command.toLowerCase() === "pasteasplaintext");
         }
 
         editor.on('BeforeExecCommand', function (e) {
-            if (isPastePlainTextCommand(e.command)) {
-                self.pasteFormat = "text";
-            }
-            return true;
+          if (isPastePlainTextCommand(e.command)) {
+            self.pasteFormat = "text";
+          }
+          return true;
         });
 
         editor.on('paste', function (e) {
