@@ -16,7 +16,7 @@ define(
     'tinymce.core.util.Tools'
   ],
      function (PluginManager, Tools) {
-       PluginManager.add('print', function (editor) {
+       PluginManager.add('redsweater', function (editor) {
 
           // Cribbed from the table plugin - they historically had behavior that would
           // do the honor of removing the bogus empty paragraph markup from the end of a document
