@@ -304,14 +304,17 @@ define(
           if (hasContentType(clipboardContent, 'text/html')) {
             content = clipboardContent['text/html'];
           } else {
-            content = pasteBin.getHtml();
-            internal = internal ? internal : InternalHtml.isMarked(content);
-
-            // If paste bin is empty try using plain text mode
-            // since that is better than nothing right
-            if (pasteBin.isDefaultContent(content)) {
-              plainTextMode = true;
-            }
+              // We never use the pastebin so just force plainTextMode
+            plainTextMode = true;
+            content = clipboardContent['text/plain'];
+//            content = pasteBin.getHtml();
+//            internal = internal ? internal : InternalHtml.isMarked(content);
+//
+//            // If paste bin is empty try using plain text mode
+//            // since that is better than nothing right
+//            if (pasteBin.isDefaultContent(content)) {
+//              plainTextMode = true;
+//            }
           }
 
           content = Utils.trimHtml(content);
@@ -362,14 +365,14 @@ define(
         // plain text option until further notice. This works around a bug in which the
         // command is not handled correctly on Mac if the keyboard shortcut is not pressed when invoking it.
         function isPastePlainTextCommand(command) {
-           return (command.toLowerCase() === "pasteasplaintext");
+          return (command.toLowerCase() === "pasteasplaintext");
         }
 
         editor.on('BeforeExecCommand', function (e) {
-            if (isPastePlainTextCommand(e.command)) {
-                self.pasteFormat = "text";
-            }
-            return true;
+          if (isPastePlainTextCommand(e.command)) {
+            self.pasteFormat = "text";
+          }
+          return true;
         });
 
         editor.on('paste', function (e) {
