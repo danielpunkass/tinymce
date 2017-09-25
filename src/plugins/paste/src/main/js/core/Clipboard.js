@@ -304,14 +304,17 @@ define(
           if (hasContentType(clipboardContent, 'text/html')) {
             content = clipboardContent['text/html'];
           } else {
-            content = pasteBin.getHtml();
-            internal = internal ? internal : InternalHtml.isMarked(content);
-
-            // If paste bin is empty try using plain text mode
-            // since that is better than nothing right
-            if (pasteBin.isDefaultContent(content)) {
-              plainTextMode = true;
-            }
+              // We never use the pastebin so just force plainTextMode
+            plainTextMode = true;
+            content = clipboardContent['text/plain'];
+//            content = pasteBin.getHtml();
+//            internal = internal ? internal : InternalHtml.isMarked(content);
+//
+//            // If paste bin is empty try using plain text mode
+//            // since that is better than nothing right
+//            if (pasteBin.isDefaultContent(content)) {
+//              plainTextMode = true;
+//            }
           }
 
           content = Utils.trimHtml(content);
