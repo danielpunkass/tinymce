@@ -11,7 +11,7 @@
 define(
   'tinymce.plugins.lists.actions.ToggleList',
   [
-    'tinymce.core.dom.BookmarkManager',
+    'tinymce.core.api.dom.BookmarkManager',
     'tinymce.core.util.Tools',
     'tinymce.plugins.lists.actions.Outdent',
     'tinymce.plugins.lists.core.Bookmark',
@@ -44,8 +44,8 @@ define(
       updateListAttrs(dom, el, detail);
     };
 
-    var getEndPointNode = function (editor, rng, start) {
-      var container, offset, root = editor.getBody();
+    var getEndPointNode = function (editor, rng, start, root) {
+      var container, offset;
 
       container = rng[start ? 'startContainer' : 'endContainer'];
       offset = rng[start ? 'startOffset' : 'endOffset'];
@@ -53,6 +53,10 @@ define(
       // Resolve node index
       if (container.nodeType === 1) {
         container = container.childNodes[Math.min(offset, container.childNodes.length - 1)] || container;
+      }
+
+      if (!start && NodeType.isBr(container.nextSibling)) {
+        container = container.nextSibling;
       }
 
       while (container.parentNode !== root) {
@@ -70,11 +74,11 @@ define(
       return container;
     };
 
-    var getSelectedTextBlocks = function (editor, rng) {
-      var textBlocks = [], root = editor.getBody(), dom = editor.dom;
+    var getSelectedTextBlocks = function (editor, rng, root) {
+      var textBlocks = [], dom = editor.dom;
 
-      var startNode = getEndPointNode(editor, rng, true);
-      var endNode = getEndPointNode(editor, rng, false);
+      var startNode = getEndPointNode(editor, rng, true, root);
+      var endNode = getEndPointNode(editor, rng, false, root);
       var block, siblings = [];
 
       for (var node = startNode; node; node = node.nextSibling) {
@@ -121,8 +125,18 @@ define(
       return textBlocks;
     };
 
+    var hasCompatibleStyle = function (dom, sib, detail) {
+      var sibStyle = dom.getStyle(sib, 'list-style-type');
+      var detailStyle = detail ? detail['list-style-type'] : '';
+
+      detailStyle = detailStyle === null ? '' : detailStyle;
+
+      return sibStyle === detailStyle;
+    };
+
     var applyList = function (editor, listName, detail) {
       var rng = editor.selection.getRng(true), bookmark, listItemName = 'LI';
+      var root = Selection.getClosestListRootElm(editor, editor.selection.getStart(true));
       var dom = editor.dom;
 
       detail = detail ? detail : {};
@@ -139,20 +153,11 @@ define(
 
       bookmark = Bookmark.createBookmark(rng);
 
-      Tools.each(getSelectedTextBlocks(editor, rng), function (block) {
+      Tools.each(getSelectedTextBlocks(editor, rng, root), function (block) {
         var listBlock, sibling;
 
-        var hasCompatibleStyle = function (sib) {
-          var sibStyle = dom.getStyle(sib, 'list-style-type');
-          var detailStyle = detail ? detail['list-style-type'] : '';
-
-          detailStyle = detailStyle === null ? '' : detailStyle;
-
-          return sibStyle === detailStyle;
-        };
-
         sibling = block.previousSibling;
-        if (sibling && NodeType.isListNode(sibling) && sibling.nodeName === listName && hasCompatibleStyle(sibling)) {
+        if (sibling && NodeType.isListNode(sibling) && sibling.nodeName === listName && hasCompatibleStyle(dom, sibling, detail)) {
           listBlock = sibling;
           block = dom.rename(block, listItemName);
           sibling.appendChild(block);
@@ -171,7 +176,8 @@ define(
     };
 
     var removeList = function (editor) {
-      var bookmark = Bookmark.createBookmark(editor.selection.getRng(true)), root = editor.getBody();
+      var bookmark = Bookmark.createBookmark(editor.selection.getRng(true));
+      var root = Selection.getClosestListRootElm(editor, editor.selection.getStart(true));
       var listItems = Selection.getSelectedListItems(editor);
       var emptyListItems = Tools.grep(listItems, function (li) {
         return editor.dom.isEmpty(li);

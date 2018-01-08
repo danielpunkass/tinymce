@@ -93,18 +93,6 @@ module.exports = function (grunt) {
         options: {
           onBeforeSave: function (zip) {
             zip.addData("dist/version.txt", packageData.version);
-
-            var src = grunt.file.read("js/tinymce/tinymce.js").toString();
-
-            zip.addData(
-              "dist/tinymce.jquery.js",
-              "window.console && console.log('Use tinymce.js instead of tinymce.jquery.js.');\n" + src
-            );
-
-            zip.addData(
-              "dist/tinymce.jquery.min.js",
-              "window.console && console.log('Use tinymce.min.js instead of tinymce.jquery.min.js.');\n" + src
-            );
           },
 
           pathFilter: function (zipFilePath) {
@@ -210,10 +198,11 @@ module.exports = function (grunt) {
               "name": "tinymce",
               "version": packageData.version,
               "description": "Web based JavaScript HTML WYSIWYG editor control.",
+              "author": "Ephox Corporation",
               "main": "tinymce.js",
               "license": "LGPL-2.1",
               "keywords": ["editor", "wysiwyg", "tinymce", "richtext", "javascript", "html"],
-              "bugs": { "url": "http://www.tinymce.com/develop/bugtracker.php" }
+              "bugs": { "url": "https://github.com/tinymce/tinymce/issues" }
             }));
 
             zip.addData("composer.json", jsonToBuffer({
@@ -245,16 +234,6 @@ module.exports = function (grunt) {
             }));
 
             var src = grunt.file.read("js/tinymce/tinymce.js").toString();
-
-            zip.addData(
-              "tinymce.jquery.js",
-              "window.console && console.log('Use tinymce.js instead of tinymce.jquery.js.');\n" + src
-            );
-
-            zip.addData(
-              "tinymce.jquery.min.js",
-              "window.console && console.log('Use tinymce.min.js instead of tinymce.jquery.min.js.');\n" + src
-            );
 
             zip.addFile(
               "jquery.tinymce.js",
@@ -444,7 +423,11 @@ module.exports = function (grunt) {
       core: {
         config: 'config/bolt/browser.js',
         projectdir: '.',
-        testfiles: ["src/**/src/test/js/browser/**/*Test.js"],
+        stopOnFailure: true,
+        testfiles: [
+          'src/**/src/test/js/atomic/**/*Test.js',
+          'src/**/src/test/js/browser/**/*Test.js'
+        ],
         customRoutes: 'src/core/src/test/json/routes.json'
       }
     },
@@ -454,6 +437,7 @@ module.exports = function (grunt) {
         browser: 'phantomjs',
         config: 'config/bolt/browser.js',
         testfiles: ['src/**/src/test/js/**/*Test.js'],
+        stopOnFailure: true,
         overallTimeout: 600000,
         singleTimeout: 300000,
         customRoutes: 'src/core/src/test/json/routes.json',
@@ -464,6 +448,7 @@ module.exports = function (grunt) {
         browser: 'chrome',
         config: 'config/bolt/browser.js',
         testfiles: ['src/**/src/test/js/**/*Test.js'],
+        stopOnFailure: true,
         overallTimeout: 600000,
         singleTimeout: 300000,
         customRoutes: 'src/core/src/test/json/routes.json',
@@ -474,6 +459,7 @@ module.exports = function (grunt) {
         browser: 'firefox',
         config: 'config/bolt/browser.js',
         testfiles: ['src/**/src/test/js/**/*Test.js'],
+        stopOnFailure: true,
         overallTimeout: 600000,
         singleTimeout: 300000,
         customRoutes: 'src/core/src/test/json/routes.json',
@@ -484,6 +470,7 @@ module.exports = function (grunt) {
         browser: 'MicrosoftEdge',
         config: 'config/bolt/browser.js',
         testfiles: ['src/**/src/test/js/**/*Test.js'],
+        stopOnFailure: true,
         overallTimeout: 600000,
         singleTimeout: 300000,
         customRoutes: 'src/core/src/test/json/routes.json',
@@ -494,6 +481,7 @@ module.exports = function (grunt) {
         browser: 'ie',
         config: 'config/bolt/browser.js',
         testfiles: ['src/**/src/test/js/**/*Test.js'],
+        stopOnFailure: true,
         overallTimeout: 600000,
         singleTimeout: 300000,
         customRoutes: 'src/core/src/test/json/routes.json',

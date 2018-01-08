@@ -6,12 +6,13 @@ asynctest(
     'ephox.katamari.api.Arr',
     'ephox.mcagar.api.LegacyUnit',
     'global!document',
+    'tinymce.core.api.dom.Serializer',
     'tinymce.core.dom.DOMUtils',
-    'tinymce.core.dom.Serializer',
+    'tinymce.core.dom.TrimHtml',
     'tinymce.core.test.ViewBlock',
     'tinymce.core.text.Zwsp'
   ],
-  function (Pipeline, Step, Arr, LegacyUnit, document, DOMUtils, Serializer, ViewBlock, Zwsp) {
+  function (Pipeline, Step, Arr, LegacyUnit, document, Serializer, DOMUtils, TrimHtml, ViewBlock, Zwsp) {
     var success = arguments[arguments.length - 2];
     var failure = arguments[arguments.length - 1];
     var suite = LegacyUnit.createSuite();
@@ -124,6 +125,16 @@ asynctest(
       LegacyUnit.equal(
         ser.serialize(DOM.get('test'), { getInner: true }),
         '<a href="a" target="_blank">a</a><a href="b" target="_blank">b</a>'
+      );
+    });
+
+    suite.test('format tree', function () {
+      var ser = new Serializer({ });
+
+      DOM.setHTML('test', 'a');
+      LegacyUnit.equal(
+        ser.serialize(DOM.get('test'), { format: 'tree' }).name,
+        'body'
       );
     });
 
@@ -329,28 +340,6 @@ asynctest(
       LegacyUnit.equal(ser.serialize(DOM.get('test')), '<p>test</p>');
     });
 
-    suite.test('Pre/post process events', function () {
-      var ser = new Serializer({ fix_list_elements : true });
-
-      ser.setRules('div[id],span[id|class],a[href],b[class]');
-
-      ser.onPreProcess = function (o) {
-        LegacyUnit.equal(o.test, 'abc');
-        DOM.setAttrib(o.node.getElementsByTagName('span')[0], 'class', 'abc');
-      };
-
-      ser.onPostProcess = function (o) {
-        LegacyUnit.equal(o.test, 'abc');
-        o.content = o.content.replace(/<b>/g, '<b class="123">');
-      };
-
-      DOM.setHTML('test', '<span id="test2"><b>abc</b></span>123<a href="file.html" data-mce-href="file.html">link</a>');
-      LegacyUnit.equal(
-        ser.serialize(DOM.get('test'), { test : 'abc' }),
-        '<div id="test"><span id="test2" class="abc"><b class="123">abc</b></span>123<a href="file.html">link</a></div>'
-      );
-    });
-
     suite.test('Script with non JS type attribute', function () {
       var ser = new Serializer({ fix_list_elements : true });
       ser.setRules('script[type|language|src]');
@@ -359,8 +348,8 @@ asynctest(
       LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<s' + 'cript type="mylanguage"></s' + 'cript>');
     });
 
-    suite.test('Script with tags inside a comment', function () {
-      var ser = new Serializer({ fix_list_elements : true });
+    suite.test('Script with tags inside a comment with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<s' + 'cript>// <img src="test"><a href="#"></a></s' + 'cript>');
@@ -370,12 +359,39 @@ asynctest(
       );
     });
 
+    suite.test('Script with tags inside a comment', function () {
+      var ser = new Serializer({ fix_list_elements : true });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<s' + 'cript>// <img src="test"><a href="#"></a></s' + 'cript>');
+      LegacyUnit.equal(
+        ser.serialize(DOM.get('test')).replace(/\r/g, ''),
+        '<s' + 'cript>// <img src="test"><a href="#"></a></s' + 'cript>'
+      );
+    });
+
+    suite.test('Script with less than with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<s' + 'cript>1 < 2;</s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<s' + 'cript>// <![CDATA[\n1 < 2;\n// ]]></s' + 'cript>');
+    });
+
     suite.test('Script with less than', function () {
       var ser = new Serializer({ fix_list_elements : true });
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<s' + 'cript>1 < 2;</s' + 'cript>');
-      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<s' + 'cript>// <![CDATA[\n1 < 2;\n// ]]></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<s' + 'cript>1 < 2;</s' + 'cript>');
+    });
+
+    suite.test('Script with type attrib and less than with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<s' + 'cript type="text/javascript">1 < 2;</s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<script type="text/javascript">// <![CDATA[\n1 < 2;\n// ]]></s' + 'cript>');
     });
 
     suite.test('Script with type attrib and less than', function () {
@@ -383,11 +399,11 @@ asynctest(
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<s' + 'cript type="text/javascript">1 < 2;</s' + 'cript>');
-      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<script type="text/javascript">// <![CDATA[\n1 < 2;\n// ]]></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<script type=\"text/javascript\">1 < 2;</script>');
     });
 
-    suite.test('Script with whitespace in beginning/end', function () {
-      var ser = new Serializer({ fix_list_elements : true });
+    suite.test('Script with whitespace in beginning/end with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<script>\n\t1 < 2;\n\t if (2 < 1)\n\t\talert(1);\n</s' + 'cript>');
@@ -397,11 +413,38 @@ asynctest(
       );
     });
 
+    suite.test('Script with whitespace in beginning/end', function () {
+      var ser = new Serializer({ fix_list_elements : true });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<script>\n\t1 < 2;\n\t if (2 < 1)\n\t\talert(1);\n</s' + 'cript>');
+      LegacyUnit.equal(
+        ser.serialize(DOM.get('test')).replace(/\r/g, ''),
+        '<script>\n\t1 < 2;\n\t if (2 < 1)\n\t\talert(1);\n</script>'
+      );
+    });
+
+    suite.test('Script with a HTML comment and less than with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<script><!-- 1 < 2; // --></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<s' + 'cript>// <![CDATA[\n1 < 2;\n// ]]></s' + 'cript>');
+    });
+
     suite.test('Script with a HTML comment and less than', function () {
       var ser = new Serializer({ fix_list_elements : true });
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<script><!-- 1 < 2; // --></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<script><!-- 1 < 2; // --></script>');
+    });
+
+    suite.test('Script with white space in beginning, comment and less than with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<script>\n\n<!-- 1 < 2;\n\n--></s' + 'cript>');
       LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<s' + 'cript>// <![CDATA[\n1 < 2;\n// ]]></s' + 'cript>');
     });
 
@@ -410,6 +453,14 @@ asynctest(
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<script>\n\n<!-- 1 < 2;\n\n--></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<script>\n\n<!-- 1 < 2;\n\n--></script>');
+    });
+
+    suite.test('Script with comments and cdata with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<script>// <![CDATA[1 < 2; // ]]></s' + 'cript>');
       LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<s' + 'cript>// <![CDATA[\n1 < 2;\n// ]]></s' + 'cript>');
     });
 
@@ -418,6 +469,14 @@ asynctest(
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<script>// <![CDATA[1 < 2; // ]]></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<script>// <![CDATA[1 < 2; // ]]></script>');
+    });
+
+    suite.test('Script with cdata with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<script><![CDATA[1 < 2; ]]></s' + 'cript>');
       LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<s' + 'cript>// <![CDATA[\n1 < 2;\n// ]]></s' + 'cript>');
     });
 
@@ -426,6 +485,14 @@ asynctest(
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<script><![CDATA[1 < 2; ]]></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<script><![CDATA[1 < 2; ]]></script>');
+    });
+
+    suite.test('Script whitespace in beginning/end and cdata with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<script>\n\n<![CDATA[\n\n1 < 2;\n\n]]>\n\n</s' + 'cript>');
       LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<s' + 'cript>// <![CDATA[\n1 < 2;\n// ]]></s' + 'cript>');
     });
 
@@ -434,7 +501,7 @@ asynctest(
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<script>\n\n<![CDATA[\n\n1 < 2;\n\n]]>\n\n</s' + 'cript>');
-      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<s' + 'cript>// <![CDATA[\n1 < 2;\n// ]]></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<script>\n\n<![CDATA[\n\n1 < 2;\n\n]]>\n\n</script>');
     });
 
     suite.test('Whitespace preserve in pre', function () {
@@ -453,11 +520,27 @@ asynctest(
       LegacyUnit.equal(ser.serialize(DOM.get('test')), '<s' + 'cript src="test.js"></s' + 'cript>');
     });
 
+    suite.test('Script with HTML comment, comment and CDATA with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<script><!--// <![CDATA[var hi = "hello";// ]]>--></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')), '<script>// <![CDATA[\nvar hi = \"hello\";\n// ]]></s' + 'cript>');
+    });
+
     suite.test('Script with HTML comment, comment and CDATA', function () {
       var ser = new Serializer({ fix_list_elements : true });
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<script><!--// <![CDATA[var hi = "hello";// ]]>--></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')), '<script><!--// <![CDATA[var hi = \"hello\";// ]]>--></script>');
+    });
+
+    suite.test('Script with block comment around cdata with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<script>/* <![CDATA[ */\nvar hi = "hello";\n/* ]]> */</s' + 'cript>');
       LegacyUnit.equal(ser.serialize(DOM.get('test')), '<script>// <![CDATA[\nvar hi = \"hello\";\n// ]]></s' + 'cript>');
     });
 
@@ -466,6 +549,14 @@ asynctest(
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<script>/* <![CDATA[ */\nvar hi = "hello";\n/* ]]> */</s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')), '<script>/* <![CDATA[ */\nvar hi = \"hello\";\n/* ]]> */</script>');
+    });
+
+    suite.test('Script with html comment and block comment around cdata with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<script><!-- /* <![CDATA[ */\nvar hi = "hello";\n/* ]]>*/--></s' + 'cript>');
       LegacyUnit.equal(ser.serialize(DOM.get('test')), '<script>// <![CDATA[\nvar hi = \"hello\";\n// ]]></s' + 'cript>');
     });
 
@@ -474,6 +565,14 @@ asynctest(
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<script><!-- /* <![CDATA[ */\nvar hi = "hello";\n/* ]]>*/--></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')), '<script><!-- /* <![CDATA[ */\nvar hi = \"hello\";\n/* ]]>*/--></script>');
+    });
+
+    suite.test('Script with line comment and html comment with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<script>// <!--\nvar hi = "hello";\n// --></s' + 'cript>');
       LegacyUnit.equal(ser.serialize(DOM.get('test')), '<script>// <![CDATA[\nvar hi = \"hello\";\n// ]]></s' + 'cript>');
     });
 
@@ -482,6 +581,14 @@ asynctest(
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<script>// <!--\nvar hi = "hello";\n// --></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')), '<script>// <!--\nvar hi = \"hello\";\n// --></script>');
+    });
+
+    suite.test('Script with block comment around html comment with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, element_format: 'xhtml' });
+      ser.setRules('script[type|language|src]');
+
+      DOM.setHTML('test', '<script>/* <!-- */\nvar hi = "hello";\n/*-->*/</s' + 'cript>');
       LegacyUnit.equal(ser.serialize(DOM.get('test')), '<script>// <![CDATA[\nvar hi = \"hello\";\n// ]]></s' + 'cript>');
     });
 
@@ -490,7 +597,7 @@ asynctest(
       ser.setRules('script[type|language|src]');
 
       DOM.setHTML('test', '<script>/* <!-- */\nvar hi = "hello";\n/*-->*/</s' + 'cript>');
-      LegacyUnit.equal(ser.serialize(DOM.get('test')), '<script>// <![CDATA[\nvar hi = \"hello\";\n// ]]></s' + 'cript>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')), '<script>/* <!-- */\nvar hi = \"hello\";\n/*-->*/</script>');
     });
 
     suite.test('Protected blocks', function () {
@@ -508,12 +615,28 @@ asynctest(
       LegacyUnit.equal(ser.serialize(DOM.get('test')), '<noscript><!-- text --><br></noscript>');
     });
 
+    suite.test('Style with whitespace at beginning with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, valid_children: '+body[style]', element_format: 'xhtml' });
+      ser.setRules('style');
+
+      DOM.setHTML('test', '<style> body { background:#fff }</style>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<style><!--\n body { background:#fff }\n--></style>');
+    });
+
     suite.test('Style with whitespace at beginning', function () {
       var ser = new Serializer({ fix_list_elements : true, valid_children: '+body[style]' });
       ser.setRules('style');
 
       DOM.setHTML('test', '<style> body { background:#fff }</style>');
-      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<style><!--\n body { background:#fff }\n--></style>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<style> body { background:#fff }</style>');
+    });
+
+    suite.test('Style with cdata with element_format: xhtml', function () {
+      var ser = new Serializer({ fix_list_elements : true, valid_children: '+body[style]', element_format: 'xhtml' });
+      ser.setRules('style');
+
+      DOM.setHTML('test', '<style>\r\n<![CDATA[\r\n   body { background:#fff }]]></style>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<style><!--\nbody { background:#fff }\n--></style>');
     });
 
     suite.test('Style with cdata', function () {
@@ -521,7 +644,7 @@ asynctest(
       ser.setRules('style');
 
       DOM.setHTML('test', '<style>\r\n<![CDATA[\r\n   body { background:#fff }]]></style>');
-      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<style><!--\nbody { background:#fff }\n--></style>');
+      LegacyUnit.equal(ser.serialize(DOM.get('test')).replace(/\r/g, ''), '<style>\n<![CDATA[\n   body { background:#fff }]]></style>');
     });
 
     suite.test('CDATA', function () {
@@ -623,7 +746,7 @@ asynctest(
 
       DOM.setHTML('test', '<p data-x="1" data-y="2" data-z="3">a</p>');
       LegacyUnit.equal(ser.serialize(DOM.get('test'), { getInner: 1 }), '<p data-z="3">a</p>');
-      LegacyUnit.equal(ser.trimHtml('<p data-x="1" data-y="2" data-z="3">a</p>'), '<p data-z="3">a</p>');
+      LegacyUnit.equal(TrimHtml.trimExternal(ser, '<p data-x="1" data-y="2" data-z="3">a</p>'), '<p data-z="3">a</p>');
     });
 
     suite.test('addTempAttr same attr twice', function () {
@@ -635,9 +758,17 @@ asynctest(
 
       DOM.setHTML('test', '<p data-x="1" data-z="3">a</p>');
       LegacyUnit.equal(ser1.serialize(DOM.get('test'), { getInner: 1 }), '<p data-z="3">a</p>');
-      LegacyUnit.equal(ser1.trimHtml('<p data-x="1" data-z="3">a</p>'), '<p data-z="3">a</p>');
+      LegacyUnit.equal(TrimHtml.trimExternal(ser1, '<p data-x="1" data-z="3">a</p>'), '<p data-z="3">a</p>');
       LegacyUnit.equal(ser2.serialize(DOM.get('test'), { getInner: 1 }), '<p data-z="3">a</p>');
-      LegacyUnit.equal(ser2.trimHtml('<p data-x="1" data-z="3">a</p>'), '<p data-z="3">a</p>');
+      LegacyUnit.equal(TrimHtml.trimExternal(ser2, '<p data-x="1" data-z="3">a</p>'), '<p data-z="3">a</p>');
+    });
+
+    suite.test('trim data-mce-bougs="all"', function () {
+      var ser = new Serializer({});
+
+      DOM.setHTML('test', 'a<p data-mce-bogus="all">b</p>c');
+      LegacyUnit.equal(ser.serialize(DOM.get('test'), { getInner: 1 }), 'ac');
+      LegacyUnit.equal(TrimHtml.trimExternal(ser, 'a<p data-mce-bogus="all">b</p>c'), 'ac');
     });
 
     suite.test('zwsp should not be treated as contents', function () {

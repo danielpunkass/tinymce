@@ -22,24 +22,25 @@ define(
   [
     'ephox.sugar.api.dom.Compare',
     'ephox.sugar.api.node.Element',
-    'tinymce.core.EditorFocus',
     'tinymce.core.Env',
+    'tinymce.core.api.dom.BookmarkManager',
     'tinymce.core.caret.CaretPosition',
-    'tinymce.core.dom.BookmarkManager',
     'tinymce.core.dom.ControlSelection',
-    'tinymce.core.dom.RangeUtils',
     'tinymce.core.dom.ScrollIntoView',
     'tinymce.core.dom.TreeWalker',
+    'tinymce.core.focus.EditorFocus',
+    'tinymce.core.selection.CaretRangeFromPoint',
     'tinymce.core.selection.EventProcessRanges',
     'tinymce.core.selection.GetSelectionContent',
     'tinymce.core.selection.MultiRange',
+    'tinymce.core.selection.NormalizeRange',
     'tinymce.core.selection.SelectionBookmark',
     'tinymce.core.selection.SetSelectionContent',
     'tinymce.core.util.Tools'
   ],
   function (
-    Compare, Element, EditorFocus, Env, CaretPosition, BookmarkManager, ControlSelection, RangeUtils, ScrollIntoView, TreeWalker, EventProcessRanges, GetSelectionContent,
-    MultiRange, SelectionBookmark, SetSelectionContent, Tools
+    Compare, Element, Env, BookmarkManager, CaretPosition, ControlSelection, ScrollIntoView, TreeWalker, EditorFocus, CaretRangeFromPoint, EventProcessRanges,
+    GetSelectionContent, MultiRange, NormalizeRange, SelectionBookmark, SetSelectionContent, Tools
   ) {
     var each = Tools.each, trim = Tools.trim;
 
@@ -242,10 +243,6 @@ define(
         var self = this, dom = self.dom, rng = dom.createRng(), idx;
 
         if (node) {
-          if (!content && self.controlSelection.controlSelect(node)) {
-            return;
-          }
-
           idx = dom.nodeIndex(node);
           rng.setStart(node.parentNode, idx);
           rng.setEnd(node.parentNode, idx + 1);
@@ -619,8 +616,14 @@ define(
       normalize: function () {
         var self = this, rng = self.getRng();
 
-        if (new RangeUtils(self.dom).normalize(rng) && !MultiRange.hasMultipleRanges(self.getSel())) {
-          self.setRng(rng, self.isForward());
+        if (!MultiRange.hasMultipleRanges(self.getSel())) {
+          var normRng = NormalizeRange.normalize(self.dom, rng);
+
+          normRng.each(function (normRng) {
+            self.setRng(normRng, self.isForward());
+          });
+
+          return normRng.getOr(rng);
         }
 
         return rng;
@@ -706,7 +709,7 @@ define(
       },
 
       placeCaretAt: function (clientX, clientY) {
-        this.setRng(RangeUtils.getCaretRangeFromPoint(clientX, clientY, this.editor.getDoc()));
+        this.setRng(CaretRangeFromPoint.fromPoint(clientX, clientY, this.editor.getDoc()));
       },
 
       _moveEndPoint: function (rng, node, start) {

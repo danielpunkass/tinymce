@@ -34,8 +34,8 @@ define(
       });
 
       editor.addButton('fullscreen', {
+        active: false,
         tooltip: 'Fullscreen',
-        shortcut: 'Ctrl+Shift+F',
         cmd: 'mceFullScreen',
         onPostRender: postRender(editor)
       });

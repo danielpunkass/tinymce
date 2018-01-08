@@ -420,7 +420,7 @@ define(
         var ei, el, ai, al, matches, element, attr, attrData, elementName, attrName, attrType, attributes, attributesOrder,
           prefix, outputName, globalAttributes, globalAttributesOrder, key, value,
           elementRuleRegExp = /^([#+\-])?([^\[!\/]+)(?:\/([^\[!]+))?(?:(!?)\[([^\]]+)\])?$/,
-          attrRuleRegExp = /^([!\-])?(\w+::\w+|[^=:<]+)?(?:([=:<])(.*))?$/,
+          attrRuleRegExp = /^([!\-])?(\w+[\\:]:\w+|[^=:<]+)?(?:([=:<])(.*))?$/,
           hasPatternsRegExp = /[*?+]/;
 
         if (validElements) {
@@ -484,7 +484,7 @@ define(
                   if (matches) {
                     attr = {};
                     attrType = matches[1];
-                    attrName = matches[2].replace(/::/g, ':');
+                    attrName = matches[2].replace(/[\\:]:/g, ':');
                     prefix = matches[3];
                     value = matches[4];
 
@@ -705,7 +705,7 @@ define(
         });
 
         // Padd these by default
-        each(split('p h1 h2 h3 h4 h5 h6 th td pre div address caption'), function (name) {
+        each(split('p h1 h2 h3 h4 h5 h6 th td pre div address caption li'), function (name) {
           elements[name].paddEmpty = true;
         });
 

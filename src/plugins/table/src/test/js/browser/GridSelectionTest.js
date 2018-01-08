@@ -1,14 +1,18 @@
 asynctest(
   'browser.tinymce.plugins.table.GridSelectionTest',
   [
+    'ephox.agar.api.Assertions',
+    'ephox.agar.api.GeneralSteps',
+    'ephox.agar.api.Logger',
     'ephox.agar.api.Pipeline',
+    'ephox.agar.api.Step',
     'ephox.mcagar.api.LegacyUnit',
     'ephox.mcagar.api.TinyLoader',
     'tinymce.core.util.Tools',
     'tinymce.plugins.table.Plugin',
     'tinymce.themes.modern.Theme'
   ],
-  function (Pipeline, LegacyUnit, TinyLoader, Tools, Plugin, Theme) {
+  function (Assertions, GeneralSteps, Logger, Pipeline, Step, LegacyUnit, TinyLoader, Tools, Plugin, Theme) {
     var success = arguments[arguments.length - 2];
     var failure = arguments[arguments.length - 1];
     var suite = LegacyUnit.createSuite();
@@ -16,48 +20,11 @@ asynctest(
     Plugin();
     Theme();
 
-    suite.test("Delete selected cells", function (editor) {
-      editor.focus();
-      editor.getBody().innerHTML = (
-        '<table><tbody>' +
-        '<tr><td data-mce-selected="1">A1</td><td>A2</td></tr>' +
-        '<tr><td data-mce-selected="1">B1</td><td>B2</td></tr>' +
-        '</tbody></table>' +
-        '<p>x</p>'
-      );
-
-      LegacyUnit.setSelection(editor, 'td', 0, 'td', 2);
-      editor.fire('keydown', { keyCode: 46 });
-
-      LegacyUnit.equal(
-        editor.getContent(),
-        '<table><tbody><tr><td>&nbsp;</td><td>A2</td></tr><tr><td>&nbsp;</td><td>B2</td></tr></tbody></table><p>x</p>'
-      );
-    });
-
-    suite.test("Delete all cells", function (editor) {
-      editor.getBody().innerHTML = (
-        '<table><tbody>' +
-        '<tr><td data-mce-selected="1">A1</td><td data-mce-selected="1">A2</td></tr>' +
-        '<tr><td data-mce-selected="1">B1</td><td data-mce-selected="1">B2</td></tr>' +
-        '</tbody></table>' +
-        '<p>x</p>'
-      );
-
-      LegacyUnit.setSelection(editor, 'td', 0, 'td', 2);
-      editor.fire('keydown', { keyCode: 46 });
-
-      LegacyUnit.equal(
-        editor.getContent(),
-        '<p>x</p>'
-      );
-    });
-
     var assertTableSelection = function (editor, tableHtml, selectCells, cellContents) {
       function selectRangeXY(table, startTd, endTd) {
-        editor.fire('mousedown', { target: startTd });
-        editor.fire('mouseover', { target: endTd });
-        editor.fire('mouseup', { target: endTd });
+        editor.fire('mousedown', { target: startTd, button: 0 });
+        editor.fire('mouseover', { target: endTd, button: 0 });
+        editor.fire('mouseup', { target: endTd, button: 0 });
       }
 
       function getCells(table) {
@@ -118,8 +85,25 @@ asynctest(
       );
     });
 
+    var sSetRawContent = function (editor, html) {
+      return Step.sync(function () {
+        editor.getBody().innerHTML = html;
+      });
+    };
+
+    var sAssertSelectionContent = function (editor, expectedHtml) {
+      return Step.sync(function () {
+        Assertions.assertHtml('Should be expected content', expectedHtml, editor.selection.getContent());
+      });
+    };
+
     TinyLoader.setup(function (editor, onSuccess, onFailure) {
-      Pipeline.async({}, suite.toSteps(editor), onSuccess, onFailure);
+      Pipeline.async({}, suite.toSteps(editor).concat([
+        Logger.t('Extracted selection contents should be without internal attributes', GeneralSteps.sequence([
+          sSetRawContent(editor, '<table><tr><td data-mce-selected="1">a</td><td>b</td></tr><tr><td data-mce-selected="1">c</td><td>d</td></tr></table>'),
+          sAssertSelectionContent(editor, '<table><tbody><tr><td>a</td></tr><tr><td>c</td></tr></tbody></table>')
+        ]))
+      ]), onSuccess, onFailure);
     }, {
       plugins: 'table',
       indent: false,

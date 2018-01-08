@@ -15,11 +15,18 @@
 define(
   'tinymce.plugins.image.core.Utils',
   [
-    'tinymce.core.util.Tools',
     'global!Math',
-    'global!document'
+    'global!document',
+    'ephox.sand.api.FileReader',
+    'tinymce.core.util.Promise',
+    'tinymce.core.util.Tools',
+    'tinymce.core.util.XHR',
+    'tinymce.plugins.image.api.Settings'
   ],
-  function (Tools, Math, document) {
+  function (Math, document, FileReader, Promise, Tools, XHR, Settings) {
+    var parseIntAndGetMax = function (val1, val2) {
+      return Math.max(parseInt(val1, 10), parseInt(val2, 10));
+    };
 
     var getImageSize = function (url, callback) {
       var img = document.createElement('img');
@@ -33,7 +40,9 @@ define(
       }
 
       img.onload = function () {
-        done(Math.max(img.width, img.clientWidth), Math.max(img.height, img.clientHeight));
+        var width = parseIntAndGetMax(img.width, img.clientWidth);
+        var height = parseIntAndGetMax(img.height, img.clientHeight);
+        done(width, height);
       };
 
       img.onerror = function () {
@@ -123,12 +132,69 @@ define(
       return css;
     };
 
+    var createImageList = function (editor, callback) {
+      var imageList = Settings.getImageList(editor);
+
+      if (typeof imageList === "string") {
+        XHR.send({
+          url: imageList,
+          success: function (text) {
+            callback(JSON.parse(text));
+          }
+        });
+      } else if (typeof imageList === "function") {
+        imageList(callback);
+      } else {
+        callback(imageList);
+      }
+    };
+
+    var waitLoadImage = function (editor, data, imgElm) {
+      function selectImage() {
+        imgElm.onload = imgElm.onerror = null;
+
+        if (editor.selection) {
+          editor.selection.select(imgElm);
+          editor.nodeChanged();
+        }
+      }
+
+      imgElm.onload = function () {
+        if (!data.width && !data.height && Settings.hasDimensions(editor)) {
+          editor.dom.setAttribs(imgElm, {
+            width: imgElm.clientWidth,
+            height: imgElm.clientHeight
+          });
+        }
+
+        selectImage();
+      };
+
+      imgElm.onerror = selectImage;
+    };
+
+    var blobToDataUri = function (blob) {
+      return new Promise(function (resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          resolve(reader.result);
+        };
+        reader.onerror = function () {
+          reject(FileReader.error.message);
+        };
+        reader.readAsDataURL(blob);
+      });
+    };
+
     return {
       getImageSize: getImageSize,
       buildListItems: buildListItems,
       removePixelSuffix: removePixelSuffix,
       addPixelSuffix: addPixelSuffix,
-      mergeMargins: mergeMargins
+      mergeMargins: mergeMargins,
+      createImageList: createImageList,
+      waitLoadImage: waitLoadImage,
+      blobToDataUri: blobToDataUri
     };
   }
 );

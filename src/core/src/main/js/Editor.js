@@ -39,25 +39,26 @@ define(
   'tinymce.core.Editor',
   [
     'tinymce.core.AddOnManager',
-    'tinymce.core.dom.DomQuery',
-    'tinymce.core.dom.DOMUtils',
     'tinymce.core.EditorCommands',
-    'tinymce.core.EditorFocus',
     'tinymce.core.EditorObservable',
     'tinymce.core.EditorSettings',
     'tinymce.core.Env',
-    'tinymce.core.html.Serializer',
-    'tinymce.core.init.Render',
     'tinymce.core.Mode',
     'tinymce.core.Shortcuts',
+    'tinymce.core.dom.DOMUtils',
+    'tinymce.core.dom.DomQuery',
+    'tinymce.core.dom.TrimHtml',
+    'tinymce.core.focus.EditorFocus',
+    'tinymce.core.html.Serializer',
+    'tinymce.core.init.Render',
     'tinymce.core.ui.Sidebar',
     'tinymce.core.util.Tools',
     'tinymce.core.util.URI',
     'tinymce.core.util.Uuid'
   ],
   function (
-    AddOnManager, DomQuery, DOMUtils, EditorCommands, EditorFocus, EditorObservable, EditorSettings, Env, Serializer, Render, Mode, Shortcuts, Sidebar, Tools,
-    URI, Uuid
+    AddOnManager, EditorCommands, EditorObservable, EditorSettings, Env, Mode, Shortcuts, DOMUtils, DomQuery, TrimHtml, EditorFocus, Serializer, Render, Sidebar,
+    Tools, URI, Uuid
   ) {
     // Shorten these names
     var DOM = DOMUtils.DOM;
@@ -384,6 +385,10 @@ define(
           settings.onclick = function () {
             self.execCommand(settings.cmd);
           };
+        }
+
+        if (settings.stateSelector && typeof settings.active === 'undefined') {
+          settings.active = false;
         }
 
         if (!settings.text && !settings.icon) {
@@ -881,8 +886,8 @@ define(
             content = new Serializer({
               validate: self.validate
             }, self.schema).serialize(
-              self.parser.parse(content, { isRootContent: true })
-              );
+              self.parser.parse(content, { isRootContent: true, insert: true })
+            );
           }
 
           // Set the new cleaned contents to the editor
@@ -940,16 +945,18 @@ define(
         }
 
         // Get raw contents or by default the cleaned contents
-        if (args.format == 'raw') {
-          content = Tools.trim(self.serializer.getTrimmedContent());
-        } else if (args.format == 'text') {
+        if (args.format === 'raw') {
+          content = Tools.trim(TrimHtml.trimExternal(self.serializer, body.innerHTML));
+        } else if (args.format === 'text') {
           content = body.innerText || body.textContent;
+        } else if (args.format === 'tree') {
+          return self.serializer.serialize(body, args);
         } else {
           content = self.serializer.serialize(body, args);
         }
 
         // Trim whitespace in beginning/end of HTML
-        if (args.format != 'text') {
+        if (args.format !== 'text') {
           args.content = trim(content);
         } else {
           args.content = content;

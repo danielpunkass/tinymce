@@ -26,16 +26,15 @@ define(
     'tinymce.core.caret.CaretWalker',
     'tinymce.core.caret.FakeCaret',
     'tinymce.core.caret.LineUtils',
-    'tinymce.core.dom.ElementType',
     'tinymce.core.dom.NodeType',
     'tinymce.core.dom.RangePoint',
+    'tinymce.core.focus.CefFocus',
     'tinymce.core.keyboard.CefUtils',
-    'tinymce.core.util.Delay',
     'tinymce.core.util.VK'
   ],
   function (
     Arr, Remove, Element, Attr, SelectorFilter, SelectorFind, DragDropOverrides, EditorView, Env, CaretContainer, CaretPosition, CaretUtils, CaretWalker, FakeCaret,
-    LineUtils, ElementType, NodeType, RangePoint, CefUtils, Delay, VK
+    LineUtils, NodeType, RangePoint, CefFocus, CefUtils, VK
   ) {
     var isContentEditableTrue = NodeType.isContentEditableTrue,
       isContentEditableFalse = NodeType.isContentEditableFalse,
@@ -232,7 +231,7 @@ define(
 
               // Check that we're not attempting a shift + click select within a contenteditable='true' element
               if (!(isContentEditableTrue(contentEditableRoot) && e.shiftKey) && !RangePoint.isXYWithinRange(e.clientX, e.clientY, editor.selection.getRng())) {
-                ElementType.isVoid(Element.fromDom(e.target)) ? editor.selection.select(e.target) : editor.selection.placeCaretAt(e.clientX, e.clientY);
+                editor.selection.placeCaretAt(e.clientX, e.clientY);
               }
             }
           } else {
@@ -302,13 +301,6 @@ define(
           }
         });
 
-        editor.on('focus', function () {
-          // Make sure we have a proper fake caret on focus
-          Delay.setEditorTimeout(editor, function () {
-            editor.selection.setRng(CefUtils.renderRangeCaret(editor, editor.selection.getRng()));
-          }, 0);
-        });
-
         editor.on('copy', function (e) {
           var clipboardData = e.clipboardData;
 
@@ -326,6 +318,7 @@ define(
         });
 
         DragDropOverrides.init(editor);
+        CefFocus.setup(editor);
       };
 
       var addCss = function () {
@@ -400,7 +393,7 @@ define(
         endOffset = range.endOffset;
 
         // Normalizes <span cE=false>[</span>] to [<span cE=false></span>]
-        if (startContainer.nodeType == 3 && startOffset == 0 && isContentEditableFalse(startContainer.parentNode)) {
+        if (startContainer.nodeType === 3 && startOffset === 0 && isContentEditableFalse(startContainer.parentNode)) {
           startContainer = startContainer.parentNode;
           startOffset = dom.nodeIndex(startContainer);
           startContainer = startContainer.parentNode;

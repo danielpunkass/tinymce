@@ -4,13 +4,11 @@ asynctest(
     'ephox.agar.api.Pipeline',
     'ephox.mcagar.api.LegacyUnit',
     'ephox.mcagar.api.TinyLoader',
-    'tinymce.core.Env',
-    'tinymce.core.FocusManager',
     'tinymce.core.test.HtmlUtils',
     'tinymce.core.util.Tools',
     'tinymce.themes.modern.Theme'
   ],
-  function (Pipeline, LegacyUnit, TinyLoader, Env, FocusManager, HtmlUtils, Tools, Theme) {
+  function (Pipeline, LegacyUnit, TinyLoader, HtmlUtils, Tools, Theme) {
     var success = arguments[arguments.length - 2];
     var failure = arguments[arguments.length - 1];
     var suite = LegacyUnit.createSuite();
@@ -20,7 +18,7 @@ asynctest(
     var pressEnter = function (editor, evt) {
       var dom = editor.dom, target = editor.selection.getNode();
 
-      evt = Tools.extend({ keyCode: 13 }, evt);
+      evt = Tools.extend({ keyCode: 13, shiftKey: false }, evt);
 
       dom.fire(target, 'keydown', evt);
       dom.fire(target, 'keypress', evt);
@@ -32,7 +30,7 @@ asynctest(
     };
 
     suite.test('Enter inside empty li in beginning of ol', function (editor) {
-      editor.getBody().innerHTML = (Env.ie && Env.ie < 11) ? '<ol><li></li><li>a</li></ol>' : '<ol><li><br></li><li>a</li></ol>';
+      editor.getBody().innerHTML = '<ol><li><br></li><li>a</li></ol>';
       LegacyUnit.setSelection(editor, 'li', 0);
       pressEnter(editor);
       LegacyUnit.equal(editor.getContent(), '<p>\u00a0</p><ol><li>a</li></ol>');
@@ -40,7 +38,7 @@ asynctest(
     });
 
     suite.test('Enter inside empty li at the end of ol', function (editor) {
-      editor.getBody().innerHTML = (Env.ie && Env.ie < 11) ? '<ol><li>a</li><li></li></ol>' : '<ol><li>a</li><li><br></li></ol>';
+      editor.getBody().innerHTML = '<ol><li>a</li><li><br></li></ol>';
       LegacyUnit.setSelection(editor, 'li:last', 0);
       pressEnter(editor);
       LegacyUnit.equal(editor.getContent(), '<ol><li>a</li></ol><p>\u00a0</p>');
@@ -48,64 +46,61 @@ asynctest(
     });
 
     suite.test('Shift+Enter inside empty li in the middle of ol', function (editor) {
-      editor.getBody().innerHTML = (Env.ie && Env.ie < 11) ?
-        '<ol><li>a</li><li></li><li>b</li></ol>' : '<ol><li>a</li><li><br></li><li>b</li></ol>';
-      LegacyUnit.setSelection(editor, 'li:nth-child(2)', 0);
+      editor.getBody().innerHTML = '<ol><li>a</li><li><br></li><li>b</li></ol>';
+      editor.selection.setCursorLocation(editor.dom.select('li:nth-child(2)')[0], 0);
       pressEnter(editor, { shiftKey: true });
-      LegacyUnit.equal(editor.getContent(), '<ol><li>a</li></ol><p>\u00a0</p><ol><li>b</li></ol>');
-      LegacyUnit.equal(editor.selection.getNode().nodeName, 'P');
+      LegacyUnit.equal(editor.getBody().innerHTML, '<ol><li>a</li><li><br><br></li><li>b</li></ol>');
+      LegacyUnit.equal(editor.selection.getNode().nodeName, 'LI');
     });
 
     suite.test('Shift+Enter inside empty li in beginning of ol', function (editor) {
-      editor.getBody().innerHTML = (Env.ie && Env.ie < 11) ? '<ol><li></li><li>a</li></ol>' : '<ol><li><br></li><li>a</li></ol>';
-      LegacyUnit.setSelection(editor, 'li', 0);
+      editor.getBody().innerHTML = '<ol><li><br></li><li>a</li></ol>';
+      editor.selection.setCursorLocation(editor.dom.select('li')[0], 0);
       pressEnter(editor, { shiftKey: true });
-      LegacyUnit.equal(editor.getContent(), '<p>\u00a0</p><ol><li>a</li></ol>');
-      LegacyUnit.equal(editor.selection.getNode().nodeName, 'P');
+      LegacyUnit.equal(editor.getBody().innerHTML, '<ol><li><br><br></li><li>a</li></ol>');
+      LegacyUnit.equal(editor.selection.getNode().nodeName, 'LI');
     });
 
     suite.test('Shift+Enter inside empty li at the end of ol', function (editor) {
-      editor.getBody().innerHTML = (Env.ie && Env.ie < 11) ? '<ol><li>a</li><li></li></ol>' : '<ol><li>a</li><li><br></li></ol>';
-      LegacyUnit.setSelection(editor, 'li:last', 0);
+      editor.getBody().innerHTML = '<ol><li>a</li><li><br></li></ol>';
+      editor.selection.setCursorLocation(editor.dom.select('li')[1], 0);
       pressEnter(editor, { shiftKey: true });
-      LegacyUnit.equal(editor.getContent(), '<ol><li>a</li></ol><p>\u00a0</p>');
-      LegacyUnit.equal(editor.selection.getNode().nodeName, 'P');
+      LegacyUnit.equal(editor.getBody().innerHTML, '<ol><li>a</li><li><br><br></li></ol>');
+      LegacyUnit.equal(editor.selection.getNode().nodeName, 'LI');
     });
 
     suite.test('Enter inside empty li in the middle of ol with forced_root_block: false', function (editor) {
       editor.settings.forced_root_block = false;
-      editor.getBody().innerHTML = (Env.ie && Env.ie < 11) ?
-        '<ol><li>a</li><li></li><li>b</li></ol>' : '<ol><li>a</li><li><br></li><li>b</li></ol>';
-      LegacyUnit.setSelection(editor, 'li:nth-child(2)', 0);
+      editor.getBody().innerHTML = '<ol><li>a</li><li><br></li><li>b</li></ol>';
+      editor.selection.setCursorLocation(editor.dom.select('li:nth-child(2)')[0], 0);
       pressEnter(editor);
-      LegacyUnit.equal(editor.getContent(), '<ol><li>a</li></ol><br /><ol><li>b</li></ol>');
+      LegacyUnit.equal(editor.getBody().innerHTML, '<ol><li>a</li></ol><br><ol><li>b</li></ol>');
       LegacyUnit.equal(editor.selection.getNode().nodeName, 'BODY');
       editor.settings.forced_root_block = 'p';
     });
 
     suite.test('Enter inside empty li in beginning of ol with forced_root_block: false', function (editor) {
       editor.settings.forced_root_block = false;
-      editor.getBody().innerHTML = (Env.ie && Env.ie < 11) ? '<ol><li></li><li>a</li></ol>' : '<ol><li><br></li><li>a</li></ol>';
-      LegacyUnit.setSelection(editor, 'li', 0);
+      editor.getBody().innerHTML = '<ol><li><br></li><li>a</li></ol>';
+      editor.selection.setCursorLocation(editor.dom.select('li')[0], 0);
       pressEnter(editor);
-      LegacyUnit.equal(editor.getContent(), '<br /><ol><li>a</li></ol>');
+      LegacyUnit.equal(editor.getBody().innerHTML, '<br><ol><li>a</li></ol>');
       LegacyUnit.equal(editor.selection.getNode().nodeName, 'BODY');
       editor.settings.forced_root_block = 'p';
     });
 
     suite.test('Enter inside empty li at the end of ol with forced_root_block: false', function (editor) {
       editor.settings.forced_root_block = false;
-      editor.getBody().innerHTML = (Env.ie && Env.ie < 11) ? '<ol><li>a</li><li></li></ol>' : '<ol><li>a</li><li><br></li></ol>';
-      LegacyUnit.setSelection(editor, 'li:last', 0);
+      editor.getBody().innerHTML = '<ol><li>a</li><li><br></li></ol>';
+      editor.selection.setCursorLocation(editor.dom.select('li')[1], 0);
       pressEnter(editor);
-      LegacyUnit.equal(HtmlUtils.cleanHtml(editor.getBody().innerHTML), '<ol><li>a</li></ol><br>');
+      LegacyUnit.equal(editor.getBody().innerHTML, '<ol><li>a</li></ol><br>');
       LegacyUnit.equal(editor.selection.getNode().nodeName, 'BODY');
       editor.settings.forced_root_block = 'p';
     });
 
     suite.test('Enter inside empty li in the middle of ol', function (editor) {
-      editor.getBody().innerHTML = (Env.ie && Env.ie < 11) ?
-        '<ol><li>a</li><li></li><li>b</li></ol>' : '<ol><li>a</li><li><br></li><li>b</li></ol>';
+      editor.getBody().innerHTML = '<ol><li>a</li><li><br></li><li>b</li></ol>';
       LegacyUnit.setSelection(editor, 'li:nth-child(2)', 0);
       pressEnter(editor);
       LegacyUnit.equal(editor.getContent(), '<ol><li>a</li></ol><p>\u00a0</p><ol><li>b</li></ol>');
@@ -176,10 +171,7 @@ asynctest(
         '</ol>'
       );
 
-      // Ignore on IE 7, 8 this is a known bug not worth fixing
-      if (!Env.ie || Env.ie > 8) {
-        LegacyUnit.equal(editor.selection.getNode().nodeName, 'LI');
-      }
+      LegacyUnit.equal(editor.selection.getNode().nodeName, 'LI');
     });
 
     suite.test('Enter inside empty LI in end of OL in LI', function (editor) {
@@ -205,7 +197,7 @@ asynctest(
         '<li>a</li>' +
         '</ol>' +
         '</li>' +
-        '<li></li>' +
+        '<li>\u00a0</li>' +
         '</ol>'
       );
 
@@ -214,39 +206,36 @@ asynctest(
 
     // Nested lists in OL elements
 
-    // Ignore on IE 7, 8 this is a known bug not worth fixing
-    if (!Env.ie || Env.ie > 8) {
-      suite.test('Enter before nested list', function (editor) {
-        editor.getBody().innerHTML = trimBrsOnIE(
-          '<ol>' +
-          '<li>a' +
-          '<ul>' +
-          '<li>b</li>' +
-          '<li>c</li>' +
-          '</ul>' +
-          '</li>' +
-          '</ol>'
-        );
+    suite.test('Enter before nested list', function (editor) {
+      editor.getBody().innerHTML = trimBrsOnIE(
+        '<ol>' +
+        '<li>a' +
+        '<ul>' +
+        '<li>b</li>' +
+        '<li>c</li>' +
+        '</ul>' +
+        '</li>' +
+        '</ol>'
+      );
 
-        LegacyUnit.setSelection(editor, 'ol > li', 1);
-        editor.focus();
-        pressEnter(editor);
+      LegacyUnit.setSelection(editor, 'ol > li', 1);
+      editor.focus();
+      pressEnter(editor);
 
-        LegacyUnit.equal(editor.getContent(),
-          '<ol>' +
-          '<li>a</li>' +
-          '<li>\u00a0' +
-          '<ul>' +
-          '<li>b</li>' +
-          '<li>c</li>' +
-          '</ul>' +
-          '</li>' +
-          '</ol>'
-        );
+      LegacyUnit.equal(editor.getContent(),
+        '<ol>' +
+        '<li>a</li>' +
+        '<li>\u00a0' +
+        '<ul>' +
+        '<li>b</li>' +
+        '<li>c</li>' +
+        '</ul>' +
+        '</li>' +
+        '</ol>'
+      );
 
-        LegacyUnit.equal(editor.selection.getNode().nodeName, 'LI');
-      });
-    }
+      LegacyUnit.equal(editor.selection.getNode().nodeName, 'LI');
+    });
 
     suite.test('Enter inside empty LI in beginning of OL in OL', function (editor) {
       editor.getBody().innerHTML = trimBrsOnIE(
@@ -266,7 +255,7 @@ asynctest(
       LegacyUnit.equal(editor.getContent(),
         '<ol>' +
         '<li>a</li>' +
-        '<li></li>' +
+        '<li>\u00a0</li>' +
         '<ol>' +
         '<li>a</li>' +
         '</ol>' +
@@ -298,7 +287,7 @@ asynctest(
         '<ol>' +
         '<li>a</li>' +
         '</ol>' +
-        '<li></li>' +
+        '<li>\u00a0</li>' +
         '<ol>' +
         '<li>b</li>' +
         '</ol>' +
@@ -329,7 +318,7 @@ asynctest(
         '<ol>' +
         '<li>a</li>' +
         '</ol>' +
-        '<li></li>' +
+        '<li>\u00a0</li>' +
         '</ol>'
       );
 
@@ -404,7 +393,7 @@ asynctest(
       editor.getBody().innerHTML = '<ol><li><p>abcd</p></li></ol>';
       LegacyUnit.setSelection(editor, 'p', 0);
       pressEnter(editor);
-      LegacyUnit.equal(editor.getContent(), '<ol><li></li><li><p>abcd</p></li></ol>');
+      LegacyUnit.equal(editor.getContent(), '<ol><li>\u00a0</li><li><p>abcd</p></li></ol>');
       LegacyUnit.equal(editor.selection.getNode().nodeName, 'P');
     });
 
@@ -413,18 +402,14 @@ asynctest(
       LegacyUnit.setSelection(editor, 'p', 2);
       pressEnter(editor);
       LegacyUnit.equal(editor.getContent(), '<ol><li><p>ab</p></li><li><p>cd</p></li></ol>');
-
-      // Ignore on IE 7, 8 this is a known bug not worth fixing
-      if (!Env.ie || Env.ie > 8) {
-        LegacyUnit.equal(editor.selection.getNode().nodeName, 'P');
-      }
+      LegacyUnit.equal(editor.selection.getNode().nodeName, 'P');
     });
 
     suite.test('Enter at end of P inside LI', function (editor) {
       editor.getBody().innerHTML = '<ol><li><p>abcd</p></li></ol>';
       LegacyUnit.setSelection(editor, 'p', 4);
       pressEnter(editor);
-      LegacyUnit.equal(editor.getContent(), '<ol><li><p>abcd</p></li><li></li></ol>');
+      LegacyUnit.equal(editor.getContent(), '<ol><li><p>abcd</p></li><li>\u00a0</li></ol>');
       LegacyUnit.equal(editor.selection.getNode().nodeName, 'LI');
     });
 
@@ -451,7 +436,7 @@ asynctest(
       pressEnter(editor, { shiftKey: true });
       LegacyUnit.equal(
         editor.getContent(),
-        (Env.ie && Env.ie < 11) ? '<ol><li><p>abcd</p></li></ol>' : '<ol><li><p>abcd<br /><br /></p></li></ol>'
+        '<ol><li><p>abcd<br /><br /></p></li></ol>'
       );
       LegacyUnit.equal(editor.selection.getNode().nodeName, 'P');
     });

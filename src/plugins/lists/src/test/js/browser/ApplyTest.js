@@ -904,6 +904,67 @@ asynctest(
       LegacyUnit.equal(editor.getBody().innerHTML, '<ul><li>a</li></ul><ol><li>b</li></ol><ul><li>c</li></ul>');
     });
 
+    suite.test('Apply unordered list on children on a fully selected ordered list', function (editor) {
+      editor.getBody().innerHTML = (
+        '<ol>' +
+          '<li>a' +
+            '<ol>' +
+              '<li>b</li>' +
+            '</ol>' +
+          '</li>' +
+          '<li>c</li>' +
+        '</ol>'
+      );
+
+      editor.execCommand('SelectAll');
+      LegacyUnit.execCommand(editor, 'InsertUnorderedList');
+      LegacyUnit.equal(editor.getBody().innerHTML, '<ul><li>a<ul><li>b</li></ul></li><li>c</li></ul>');
+    });
+
+    suite.test('Apply unordered list on empty table cell', function (editor) {
+      editor.getBody().innerHTML = (
+        '<table>' +
+          '<tbody>' +
+            '<tr>' +
+              '<td>' +
+                '<br />' +
+              '</td>' +
+            '</tr>' +
+          '</tbody>' +
+        '</table>'
+      );
+
+      var rng = editor.dom.createRng();
+      rng.setStart(editor.dom.select('td')[0], 0);
+      rng.setEnd(editor.dom.select('td')[0], 1);
+      editor.selection.setRng(rng);
+
+      LegacyUnit.execCommand(editor, 'InsertUnorderedList');
+      LegacyUnit.equal(editor.getBody().innerHTML, '<table><tbody><tr><td><ul><li><br></li></ul></td></tr></tbody></table>');
+    });
+
+    suite.test('Apply unordered list on table cell with two lines br', function (editor) {
+      editor.getBody().innerHTML = (
+        '<table>' +
+          '<tbody>' +
+            '<tr>' +
+              '<td>' +
+                'a<br>b' +
+              '</td>' +
+            '</tr>' +
+          '</tbody>' +
+        '</table>'
+      );
+
+      var rng = editor.dom.createRng();
+      rng.setStart(editor.dom.select('td')[0].firstChild, 0);
+      rng.setEnd(editor.dom.select('td')[0].firstChild, 0);
+      editor.selection.setRng(rng);
+
+      LegacyUnit.execCommand(editor, 'InsertUnorderedList');
+      LegacyUnit.equal(editor.getBody().innerHTML, '<table><tbody><tr><td><ul><li>a</li></ul>b</td></tr></tbody></table>');
+    });
+
     TinyLoader.setup(function (editor, onSuccess, onFailure) {
       Pipeline.async({}, suite.toSteps(editor), onSuccess, onFailure);
     }, {

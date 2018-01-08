@@ -12,6 +12,7 @@ define(
   'tinymce.themes.modern.modes.Inline',
   [
     'global!document',
+    'tinymce.core.Env',
     'tinymce.core.dom.DOMUtils',
     'tinymce.core.ui.Factory',
     'tinymce.themes.modern.api.Events',
@@ -23,7 +24,11 @@ define(
     'tinymce.themes.modern.ui.Toolbar',
     'tinymce.ui.FloatPanel'
   ],
-  function (document, DOMUtils, Factory, Events, Settings, A11y, ContextToolbars, Menubar, SkinLoaded, Toolbar, FloatPanel) {
+  function (document, Env, DOMUtils, Factory, Events, Settings, A11y, ContextToolbars, Menubar, SkinLoaded, Toolbar, FloatPanel) {
+    var isFixed = function (inlineToolbarContainer) {
+      return !!(inlineToolbarContainer && !Env.container);
+    };
+
     var render = function (editor, theme, args) {
       var panel, inlineToolbarContainer;
       var DOM = DOMUtils.DOM;
@@ -88,8 +93,8 @@ define(
           direction: 'column',
           align: 'stretch',
           autohide: false,
-          autofix: true,
-          fixed: !!inlineToolbarContainer,
+          autofix: isFixed(inlineToolbarContainer),
+          fixed: isFixed(inlineToolbarContainer),
           border: 1,
           items: [
             Settings.hasMenubar(editor) === false ? null : { type: 'menubar', border: '0 0 1 0', items: Menubar.createMenuButtons(editor) },
@@ -105,7 +110,12 @@ define(
         }*/
 
         Events.fireBeforeRenderUI(editor);
-        panel.renderTo(inlineToolbarContainer || document.body).reflow();
+
+        if (inlineToolbarContainer) {
+          panel.renderTo(inlineToolbarContainer).reflow();
+        } else {
+          panel.renderTo().reflow();
+        }
 
         A11y.addKeys(editor, panel);
         show();
@@ -122,7 +132,7 @@ define(
 
       editor.on('focus', function () {
         // Render only when the CSS file has been loaded
-        if (args.skinUiCss) {
+        if (Settings.isSkinDisabled(editor) === false && args.skinUiCss) {
           DOM.styleSheetLoader.load(args.skinUiCss, render, render);
         } else {
           render();
@@ -140,8 +150,10 @@ define(
       });
 
       // Preload skin css
-      if (args.skinUiCss) {
+      if (Settings.isSkinDisabled(editor) === false && args.skinUiCss) {
         DOM.styleSheetLoader.load(args.skinUiCss, SkinLoaded.fireSkinLoaded(editor));
+      } else {
+        SkinLoaded.fireSkinLoaded(editor)();
       }
 
       return {};

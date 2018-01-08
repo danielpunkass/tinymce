@@ -19,18 +19,18 @@ define(
   [
     'ephox.katamari.api.Option',
     'ephox.sugar.api.node.Element',
+    'tinymce.core.Env',
+    'tinymce.core.InsertList',
     'tinymce.core.caret.CaretPosition',
     'tinymce.core.caret.CaretWalker',
     'tinymce.core.dom.ElementUtils',
     'tinymce.core.dom.NodeType',
     'tinymce.core.dom.PaddingBr',
-    'tinymce.core.dom.RangeNormalizer',
-    'tinymce.core.Env',
     'tinymce.core.html.Serializer',
-    'tinymce.core.InsertList',
+    'tinymce.core.selection.RangeNormalizer',
     'tinymce.core.util.Tools'
   ],
-  function (Option, Element, CaretPosition, CaretWalker, ElementUtils, NodeType, PaddingBr, RangeNormalizer, Env, Serializer, InsertList, Tools) {
+  function (Option, Element, Env, InsertList, CaretPosition, CaretWalker, ElementUtils, NodeType, PaddingBr, Serializer, RangeNormalizer, Tools) {
     var isTableCell = NodeType.matchNodeNames('td th');
 
     var validInsertion = function (editor, value, parentNode) {
@@ -297,7 +297,7 @@ define(
       parentNode = selection.getNode();
 
       // Parse the fragment within the context of the parent node
-      var parserArgs = { context: parentNode.nodeName.toLowerCase(), data: details.data };
+      var parserArgs = { context: parentNode.nodeName.toLowerCase(), data: details.data, insert: true };
       fragment = parser.parse(value, parserArgs);
 
       // Custom handling of lists

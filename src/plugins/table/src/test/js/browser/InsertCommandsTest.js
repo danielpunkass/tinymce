@@ -146,7 +146,7 @@ asynctest(
       plugins: 'table',
       indent: false,
       valid_styles: {
-        '*': 'width,height,vertical-align,text-align,float,border-color,background-color,border,padding,border-spacing,border-collapse'
+        '*': 'height,vertical-align,text-align,float,border-color,background-color,border,padding,border-spacing,border-collapse'
       },
       skin_url: '/project/src/skins/lightgray/dist/lightgray'
     }, success, failure);

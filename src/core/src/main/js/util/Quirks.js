@@ -21,20 +21,14 @@ define(
   [
     'global!document',
     'global!window',
-    'tinymce.core.caret.CaretContainer',
-    'tinymce.core.caret.CaretPosition',
-    'tinymce.core.caret.CaretWalker',
-    'tinymce.core.dom.NodePath',
-    'tinymce.core.dom.RangeUtils',
-    'tinymce.core.dom.TreeWalker',
     'tinymce.core.Env',
-    'tinymce.core.html.Entities',
-    'tinymce.core.html.Node',
+    'tinymce.core.caret.CaretContainer',
+    'tinymce.core.selection.CaretRangeFromPoint',
     'tinymce.core.util.Delay',
     'tinymce.core.util.Tools',
     'tinymce.core.util.VK'
   ],
-  function (document, window, CaretContainer, CaretPosition, CaretWalker, NodePath, RangeUtils, TreeWalker, Env, Entities, Node, Delay, Tools, VK) {
+  function (document, window, Env, CaretContainer, CaretRangeFromPoint, Delay, Tools, VK) {
     return function (editor) {
       var each = Tools.each;
       var BACKSPACE = VK.BACKSPACE, DELETE = VK.DELETE, dom = editor.dom, selection = editor.selection,
@@ -531,14 +525,13 @@ define(
        * this fix will lean the caret right into the closest inline element.
        */
       var normalizeSelection = function () {
-        // Normalize selection for example <b>a</b><i>|a</i> becomes <b>a|</b><i>a</i> except for Ctrl+A since it selects everything
+        // Normalize selection for example <b>a</b><i>|a</i> becomes <b>a|</b><i>a</i>
         editor.on('keyup focusin mouseup', function (e) {
-          if (e.keyCode != 65 || !VK.metaKeyPressed(e)) {
-            // We can't normalize on non collapsed ranges on keyboard events since that would cause
-            // issues with moving the selection over empty paragraphs. See #TINY-1130
-            if (e.type !== 'keyup' || editor.selection.isCollapsed()) {
-              selection.normalize();
-            }
+          // no point to exclude Ctrl+A, since normalization will still run after Ctrl will be unpressed
+          // better exclude any key combinations with the modifiers to avoid double normalization
+          // (also addresses TINY-1130)
+          if (!VK.modifierPressed(e)) {
+            selection.normalize();
           }
         }, true);
       };
@@ -575,7 +568,7 @@ define(
 
       /**
        * IE 11 has an annoying issue where you can't move focus into the editor
-       * by clicking on the white area HTML element. We used to be able to to fix this with
+       * by clicking on the white area HTML element. We used to be able to fix this with
        * the fixCaretSelectionOfDocumentElementOnIe fix. But since M$ removed the selection
        * object it's not possible anymore. So we need to hack in a ungly CSS to force the
        * body to be at least 150px. If the user clicks the HTML element out side this 150px region
@@ -754,7 +747,7 @@ define(
             if (internalContent && internalContent.id != editor.id) {
               e.preventDefault();
 
-              var rng = RangeUtils.getCaretRangeFromPoint(e.x, e.y, editor.getDoc());
+              var rng = CaretRangeFromPoint.fromPoint(e.x, e.y, editor.getDoc());
               selection.setRng(rng);
               insertClipboardContents(internalContent.html, true);
             }

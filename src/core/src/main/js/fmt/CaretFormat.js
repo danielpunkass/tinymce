@@ -12,39 +12,54 @@ define(
   'tinymce.core.fmt.CaretFormat',
   [
     'ephox.katamari.api.Arr',
+    'ephox.sugar.api.dom.Insert',
+    'ephox.sugar.api.dom.Remove',
     'ephox.sugar.api.node.Element',
+    'ephox.sugar.api.node.Node',
+    'ephox.sugar.api.properties.Attr',
+    'tinymce.core.caret.CaretPosition',
+    'tinymce.core.dom.NodeType',
     'tinymce.core.dom.PaddingBr',
-    'tinymce.core.dom.RangeUtils',
     'tinymce.core.dom.TreeWalker',
     'tinymce.core.fmt.ExpandRange',
     'tinymce.core.fmt.FormatUtils',
     'tinymce.core.fmt.MatchFormat',
+    'tinymce.core.selection.SplitRange',
     'tinymce.core.text.Zwsp',
-    'tinymce.core.util.Fun',
-    'tinymce.core.util.Tools'
+    'tinymce.core.util.Fun'
   ],
-  function (Arr, Element, PaddingBr, RangeUtils, TreeWalker, ExpandRange, FormatUtils, MatchFormat, Zwsp, Fun, Tools) {
-    var ZWSP = Zwsp.ZWSP, CARET_ID = '_mce_caret', DEBUG = false;
+  function (Arr, Insert, Remove, Element, Node, Attr, CaretPosition, NodeType, PaddingBr, TreeWalker, ExpandRange, FormatUtils, MatchFormat, SplitRange, Zwsp, Fun) {
+    var ZWSP = Zwsp.ZWSP, CARET_ID = '_mce_caret';
+
+    var importNode = function (ownerDocument, node) {
+      return ownerDocument.importNode(node, true);
+    };
 
     var isCaretNode = function (node) {
       return node.nodeType === 1 && node.id === CARET_ID;
     };
 
-    var isCaretContainerEmpty = function (node, nodes) {
+    var getEmptyCaretContainers = function (node) {
+      var nodes = [];
+
       while (node) {
         if ((node.nodeType === 3 && node.nodeValue !== ZWSP) || node.childNodes.length > 1) {
-          return false;
+          return [];
         }
 
         // Collect nodes
-        if (nodes && node.nodeType === 1) {
+        if (node.nodeType === 1) {
           nodes.push(node);
         }
 
         node = node.firstChild;
       }
 
-      return true;
+      return nodes;
+    };
+
+    var isCaretContainerEmpty = function (node) {
+      return getEmptyCaretContainers(node).length > 0;
     };
 
     var findFirstTextNode = function (node) {
@@ -63,39 +78,33 @@ define(
       return null;
     };
 
-    var createCaretContainer = function (dom, fill) {
-      var caretContainer = dom.create('span', { id: CARET_ID, 'data-mce-bogus': '1', style: DEBUG ? 'color:red' : '' });
+    var createCaretContainer = function (fill) {
+      var caretContainer = Element.fromTag('span');
+
+      Attr.setAll(caretContainer, {
+        //style: 'color:red',
+        id: CARET_ID,
+        'data-mce-bogus': '1',
+        'data-mce-type': 'format-caret'
+      });
 
       if (fill) {
-        caretContainer.appendChild(dom.doc.createTextNode(ZWSP));
+        Insert.append(caretContainer, Element.fromText(ZWSP));
       }
 
       return caretContainer;
     };
 
-    var getParentCaretContainer = function (node) {
-      while (node) {
+    var getParentCaretContainer = function (body, node) {
+      while (node && node !== body) {
         if (node.id === CARET_ID) {
           return node;
         }
 
         node = node.parentNode;
       }
-    };
 
-    // Checks if the parent caret container node isn't empty if that is the case it
-    // will remove the bogus state on all children that isn't empty
-    var unmarkBogusCaretParents = function (dom, selection) {
-      var caretContainer;
-
-      caretContainer = getParentCaretContainer(selection.getStart());
-      if (caretContainer && !dom.isEmpty(caretContainer)) {
-        Tools.walk(caretContainer, function (node) {
-          if (node.nodeType === 1 && node.id !== CARET_ID && !dom.isEmpty(node)) {
-            dom.setAttrib(node, 'data-mce-bogus', null);
-          }
-        }, 'childNodes');
-      }
+      return null;
     };
 
     var trimZwspFromCaretContainer = function (caretContainerNode) {
@@ -141,9 +150,9 @@ define(
     };
 
     // Removes the caret container for the specified node or all on the current document
-    var removeCaretContainer = function (dom, selection, node, moveCaret) {
+    var removeCaretContainer = function (body, dom, selection, node, moveCaret) {
       if (!node) {
-        node = getParentCaretContainer(selection.getStart());
+        node = getParentCaretContainer(body, selection.getStart());
 
         if (!node) {
           while ((node = dom.get(CARET_ID))) {
@@ -184,25 +193,16 @@ define(
       return appendNode(innerMostFormatNode, innerMostFormatNode.ownerDocument.createTextNode(ZWSP));
     };
 
-    var setupCaretEvents = function (editor) {
-      if (!editor._hasCaretEvents) {
-        bindEvents(editor);
-        editor._hasCaretEvents = true;
-      }
-    };
-
     var applyCaretFormat = function (editor, name, vars) {
       var rng, caretContainer, textNode, offset, bookmark, container, text;
-      var dom = editor.dom, selection = editor.selection;
-
-      setupCaretEvents(editor);
+      var selection = editor.selection;
 
       rng = selection.getRng(true);
       offset = rng.startOffset;
       container = rng.startContainer;
       text = container.nodeValue;
 
-      caretContainer = getParentCaretContainer(selection.getStart());
+      caretContainer = getParentCaretContainer(editor.getBody(), selection.getStart());
       if (caretContainer) {
         textNode = findFirstTextNode(caretContainer);
       }
@@ -219,7 +219,7 @@ define(
 
         // Expand the range to the closest word and split it at those points
         rng = ExpandRange.expandRng(editor, rng, editor.formatter.get(name));
-        rng = new RangeUtils(dom).split(rng);
+        rng = SplitRange.split(rng);
 
         // Apply the format to the range
         editor.formatter.apply(name, vars, rng);
@@ -228,7 +228,8 @@ define(
         selection.moveToBookmark(bookmark);
       } else {
         if (!caretContainer || textNode.nodeValue !== ZWSP) {
-          caretContainer = createCaretContainer(dom, true);
+          // Need to import the node into the document on IE or we get a lovely WrongDocument exception
+          caretContainer = importNode(editor.getDoc(), createCaretContainer(true).dom());
           textNode = caretContainer.firstChild;
 
           rng.insertNode(caretContainer);
@@ -248,8 +249,6 @@ define(
       var dom = editor.dom, selection = editor.selection;
       var rng = selection.getRng(true), container, offset, bookmark;
       var hasContentAfter, node, formatNode, parents = [], caretContainer;
-
-      setupCaretEvents(editor);
 
       container = rng.startContainer;
       offset = rng.startOffset;
@@ -291,13 +290,13 @@ define(
 
         // Expand the range to the closest word and split it at those points
         rng = ExpandRange.expandRng(editor, rng, editor.formatter.get(name), true);
-        rng = new RangeUtils(dom).split(rng);
+        rng = SplitRange.split(rng);
 
         editor.formatter.remove(name, vars, rng);
         selection.moveToBookmark(bookmark);
       } else {
-        caretContainer = getParentCaretContainer(formatNode);
-        var newCaretContainer = createCaretContainer(dom, false);
+        caretContainer = getParentCaretContainer(editor.getBody(), formatNode);
+        var newCaretContainer = createCaretContainer(false).dom();
         var caretNode = insertFormatNodesIntoCaretContainer(parents, newCaretContainer);
 
         if (caretContainer) {
@@ -315,69 +314,51 @@ define(
       }
     };
 
-    var bindEvents = function (editor) {
-      var dom = editor.dom, selection = editor.selection;
+    var disableCaretContainer = function (body, dom, selection, keyCode) {
+      removeCaretContainer(body, dom, selection, null, false);
 
-      if (!editor._hasCaretEvents) {
-        var markCaretContainersBogus, disableCaretContainer;
+      // Remove caret container if it's empty
+      if (keyCode === 8 && selection.isCollapsed() && selection.getStart().innerHTML === ZWSP) {
+        removeCaretContainer(body, dom, selection, getParentCaretContainer(body, selection.getStart()));
+      }
 
-        editor.on('BeforeGetContent', function (e) {
-          if (markCaretContainersBogus && e.format !== 'raw') {
-            markCaretContainersBogus();
-          }
-        });
-
-        editor.on('mouseup keydown', function (e) {
-          if (disableCaretContainer) {
-            disableCaretContainer(e);
-          }
-        });
-
-        // Mark current caret container elements as bogus when getting the contents so we don't end up with empty elements
-        markCaretContainersBogus = function () {
-          var nodes = [], i;
-
-          if (isCaretContainerEmpty(getParentCaretContainer(selection.getStart()), nodes)) {
-            // Mark children
-            i = nodes.length;
-            while (i--) {
-              dom.setAttrib(nodes[i], 'data-mce-bogus', '1');
-            }
-          }
-        };
-
-        disableCaretContainer = function (e) {
-          var keyCode = e.keyCode;
-
-          removeCaretContainer(dom, selection, null, false);
-
-          // Remove caret container if it's empty
-          if (keyCode === 8 && selection.isCollapsed() && selection.getStart().innerHTML === ZWSP) {
-            removeCaretContainer(dom, selection, getParentCaretContainer(selection.getStart()));
-          }
-
-          // Remove caret container on keydown and it's left/right arrow keys
-          if (keyCode === 37 || keyCode === 39) {
-            removeCaretContainer(dom, selection, getParentCaretContainer(selection.getStart()));
-          }
-
-          unmarkBogusCaretParents(dom, selection);
-        };
-
-        // Remove bogus state if they got filled by contents using editor.selection.setContent
-        editor.on('SetContent', function (e) {
-          if (e.selection) {
-            unmarkBogusCaretParents(dom, selection);
-          }
-        });
-        editor._hasCaretEvents = true;
+      // Remove caret container on keydown and it's left/right arrow keys
+      if (keyCode === 37 || keyCode === 39) {
+        removeCaretContainer(body, dom, selection, getParentCaretContainer(body, selection.getStart()));
       }
     };
 
+    var setup = function (editor) {
+      var dom = editor.dom, selection = editor.selection;
+      var body = editor.getBody();
+
+      editor.on('mouseup keydown', function (e) {
+        disableCaretContainer(body, dom, selection, e.keyCode);
+      });
+    };
+
+    var replaceWithCaretFormat = function (targetNode, formatNodes) {
+      var caretContainer = createCaretContainer(false);
+      var innerMost = insertFormatNodesIntoCaretContainer(formatNodes, caretContainer.dom());
+      Insert.before(Element.fromDom(targetNode), caretContainer);
+      Remove.remove(Element.fromDom(targetNode));
+
+      return CaretPosition(innerMost, 0);
+    };
+
+    var isFormatElement = function (editor, element) {
+      var inlineElements = editor.schema.getTextInlineElements();
+      return inlineElements.hasOwnProperty(Node.name(element)) && !isCaretNode(element.dom()) && !NodeType.isBogus(element.dom());
+    };
+
     return {
+      setup: setup,
       applyCaretFormat: applyCaretFormat,
       removeCaretFormat: removeCaretFormat,
-      isCaretNode: isCaretNode
+      isCaretNode: isCaretNode,
+      getParentCaretContainer: getParentCaretContainer,
+      replaceWithCaretFormat: replaceWithCaretFormat,
+      isFormatElement: isFormatElement
     };
   }
 );

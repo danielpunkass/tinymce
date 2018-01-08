@@ -318,6 +318,100 @@ asynctest(
         Logger.t('isCaretNode', Step.sync(function () {
           Assertions.assertEq('Should be false since it is not a caret node', false, CaretFormat.isCaretNode(editor.dom.create('b')));
           Assertions.assertEq('Should be false since it ia caret node', true, CaretFormat.isCaretNode(editor.dom.create('span', { id: '_mce_caret' })));
+        })),
+        Logger.t("Apply some format to the empty editor and make sure that the content didn't mutate after serialization (TINY-1288)", GeneralSteps.sequence([
+          tinyApis.sSetContent(''),
+          tinyApis.sSetCursor([0], 0),
+          tinyApis.sExecCommand('fontname', 'Arial'),
+          tinyApis.sAssertContent(''),
+          sAssertNormalizedContentStructure(editor, ApproxStructure.build(function (s, str) {
+            return s.element('body', {
+              children: [
+                s.element('p', {
+                  children: [
+                    s.element('span', {
+                      attrs: {
+                        'id': str.is('_mce_caret'),
+                        'data-mce-bogus': str.is('1')
+                      },
+                      children: [
+                        s.element('span', {
+                          attrs: {
+                            'style': str.is('font-family: Arial;'),
+                            'data-mce-bogus': str.none('1') // shouldn't be set
+                          },
+                          children: [
+                            s.text(str.is(Zwsp.ZWSP))
+                          ]
+                        })
+                      ]
+                    }),
+                    s.element('br', {})
+                  ]
+                })
+              ]
+            });
+          }))
+        ])),
+        Logger.t('getParentCaretContainer', Step.sync(function () {
+          var body = Element.fromHtml('<div><span id="_mce_caret">a</span></div>');
+          var caret = Element.fromDom(body.dom().firstChild);
+
+          Assertions.assertDomEq('Should be caret element on child', caret, Element.fromDom(CaretFormat.getParentCaretContainer(body.dom(), caret.dom().firstChild)));
+          Assertions.assertDomEq('Should be caret element on self', caret, Element.fromDom(CaretFormat.getParentCaretContainer(body.dom(), caret.dom())));
+          Assertions.assertEq('Should not be caret element', null, CaretFormat.getParentCaretContainer(body, Element.fromTag('span').dom()));
+          Assertions.assertEq('Should not be caret element', null, CaretFormat.getParentCaretContainer(caret.dom(), caret.dom()));
+        })),
+        Logger.t('replaceWithCaretFormat', Step.sync(function () {
+          var body = Element.fromHtml('<div><br /></div>');
+          var formats = [
+            Element.fromTag('b').dom(),
+            Element.fromTag('i').dom()
+          ];
+
+          var pos = CaretFormat.replaceWithCaretFormat(body.dom().firstChild, formats);
+
+          Assertions.assertEq('Should be at first offset', 0, pos.offset());
+          Assertions.assertEq('Should the zwsp text node', Zwsp.ZWSP, pos.container().data);
+
+          Assertions.assertStructure(
+            'Asserting the normalized structure of tiny content.',
+            ApproxStructure.build(function (s, str) {
+              return s.element('div', {
+                children: [
+                  s.element('span', {
+                    attrs: {
+                      'id': str.is('_mce_caret'),
+                      'data-mce-bogus': str.is('1')
+                    },
+                    children: [
+                      s.element('i', {
+                        children: [
+                          s.element('b', {
+                            children: [
+                              s.text(str.is(Zwsp.ZWSP))
+                            ]
+                          })
+                        ]
+                      })
+                    ]
+                  })
+                ]
+              });
+            }),
+            body
+          );
+        })),
+        Logger.t('isFormatElement', Step.sync(function () {
+          Assertions.assertEq('Should be format element', true, CaretFormat.isFormatElement(editor, Element.fromTag('b')));
+          Assertions.assertEq('Should be format element', true, CaretFormat.isFormatElement(editor, Element.fromTag('i')));
+          Assertions.assertEq('Should be format element', true, CaretFormat.isFormatElement(editor, Element.fromTag('u')));
+          Assertions.assertEq('Should be format element', true, CaretFormat.isFormatElement(editor, Element.fromTag('span')));
+          Assertions.assertEq('Should not be format element', false, CaretFormat.isFormatElement(editor, Element.fromTag('p')));
+          Assertions.assertEq('Should not be format element', false, CaretFormat.isFormatElement(editor, Element.fromTag('div')));
+          Assertions.assertEq('Should not be format element', false, CaretFormat.isFormatElement(editor, Element.fromHtml('<a href="#"></a>')));
+          Assertions.assertEq('Should not be format element', false, CaretFormat.isFormatElement(editor, Element.fromHtml('<span data-mce-bogus="1"></span>')));
+          Assertions.assertEq('Should not be format element', false, CaretFormat.isFormatElement(editor, Element.fromHtml('<span id="_mce_caret"></span>')));
         }))
       ], onSuccess, onFailure);
     }, {

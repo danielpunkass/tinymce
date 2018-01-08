@@ -5,12 +5,11 @@ asynctest(
     'ephox.mcagar.api.LegacyUnit',
     'ephox.mcagar.api.TinyLoader',
     'tinymce.core.Env',
-    'tinymce.core.FocusManager',
     'tinymce.core.test.HtmlUtils',
     'tinymce.core.util.Tools',
     'tinymce.themes.modern.Theme'
   ],
-  function (Pipeline, LegacyUnit, TinyLoader, Env, FocusManager, HtmlUtils, Tools, Theme) {
+  function (Pipeline, LegacyUnit, TinyLoader, Env, HtmlUtils, Tools, Theme) {
     var success = arguments[arguments.length - 2];
     var failure = arguments[arguments.length - 1];
     var suite = LegacyUnit.createSuite();
@@ -20,7 +19,7 @@ asynctest(
     var pressEnter = function (editor, evt) {
       var dom = editor.dom, target = editor.selection.getNode();
 
-      evt = Tools.extend({ keyCode: 13 }, evt);
+      evt = Tools.extend({ keyCode: 13, shiftKey: false }, evt);
 
       dom.fire(target, 'keydown', evt);
       dom.fire(target, 'keypress', evt);
@@ -357,6 +356,15 @@ asynctest(
       LegacyUnit.setSelection(editor, 'p:nth-child(2)', 0);
       pressEnter(editor);
       LegacyUnit.equal(editor.getContent(), '<blockquote><p>abc</p></blockquote><p>\u00a0</p><blockquote><p>123</p></blockquote>');
+      editor.settings.forced_root_block = 'p';
+    });
+
+    suite.test('Enter in empty P at in the middle of a blockquote and end_container_on_empty_block: true', function (editor) {
+      editor.settings.end_container_on_empty_block = true;
+      editor.getBody().innerHTML = '<blockquote><p>abc</p><p>\u00a0</p><p><br></p><p>123</p></blockquote>';
+      LegacyUnit.setSelection(editor, 'p:nth-child(3)', 0);
+      pressEnter(editor);
+      LegacyUnit.equal(editor.getContent(), '<blockquote><p>abc</p><p>\u00a0</p></blockquote><p>\u00a0</p><blockquote><p>123</p></blockquote>');
       editor.settings.forced_root_block = 'p';
     });
 

@@ -13,14 +13,16 @@ define(
   [
     'ephox.katamari.api.Arr',
     'ephox.sugar.api.node.Element',
-    'tinymce.core.dom.RangeUtils'
+    'tinymce.core.selection.RangeNodes'
   ],
-  function (Arr, Element, RangeUtils) {
+  function (Arr, Element, RangeNodes) {
     var getRanges = function (selection) {
       var ranges = [];
 
-      for (var i = 0; i < selection.rangeCount; i++) {
-        ranges.push(selection.getRangeAt(i));
+      if (selection) {
+        for (var i = 0; i < selection.rangeCount; i++) {
+          ranges.push(selection.getRangeAt(i));
+        }
       }
 
       return ranges;
@@ -28,7 +30,7 @@ define(
 
     var getSelectedNodes = function (ranges) {
       return Arr.bind(ranges, function (range) {
-        var node = RangeUtils.getSelectedNode(range);
+        var node = RangeNodes.getSelectedNode(range);
         return node ? [ Element.fromDom(node) ] : [];
       });
     };

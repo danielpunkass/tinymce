@@ -17,19 +17,37 @@ define(
   ],
   function (DomQuery, Tools, NodeType) {
     var getParentList = function (editor) {
-      return editor.dom.getParent(editor.selection.getStart(true), 'OL,UL,DL');
+      var selectionStart = editor.selection.getStart(true);
+
+      return editor.dom.getParent(selectionStart, 'OL,UL,DL', getClosestListRootElm(editor, selectionStart));
+    };
+
+    var isParentListSelected = function (parentList, selectedBlocks) {
+      return parentList && selectedBlocks.length === 1 && selectedBlocks[0] === parentList;
+    };
+
+    var findSubLists = function (parentList) {
+      return Tools.grep(parentList.querySelectorAll('ol,ul,dl'), function (elm) {
+        return NodeType.isListNode(elm);
+      });
     };
 
     var getSelectedSubLists = function (editor) {
       var parentList = getParentList(editor);
-      return Tools.grep(editor.selection.getSelectedBlocks(), function (elm) {
-        return NodeType.isListNode(elm) && parentList !== elm;
-      });
+      var selectedBlocks = editor.selection.getSelectedBlocks();
+
+      if (isParentListSelected(parentList, selectedBlocks)) {
+        return findSubLists(parentList);
+      } else {
+        return Tools.grep(selectedBlocks, function (elm) {
+          return NodeType.isListNode(elm) && parentList !== elm;
+        });
+      }
     };
 
     var findParentListItemsNodes = function (editor, elms) {
       var listItemsElms = Tools.map(elms, function (elm) {
-        var parentLi = editor.dom.getParent(elm, 'li,dd,dt', editor.getBody());
+        var parentLi = editor.dom.getParent(elm, 'li,dd,dt', getClosestListRootElm(editor, elm));
 
         return parentLi ? parentLi : elm;
       });
@@ -44,10 +62,18 @@ define(
       });
     };
 
+    var getClosestListRootElm = function (editor, elm) {
+      var parentTableCell = editor.dom.getParents(elm, 'TD,TH');
+      var root = parentTableCell.length > 0 ? parentTableCell[0] : editor.getBody();
+
+      return root;
+    };
+
     return {
       getParentList: getParentList,
       getSelectedSubLists: getSelectedSubLists,
-      getSelectedListItems: getSelectedListItems
+      getSelectedListItems: getSelectedListItems,
+      getClosestListRootElm: getClosestListRootElm
     };
   }
 );

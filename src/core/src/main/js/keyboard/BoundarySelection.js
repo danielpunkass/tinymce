@@ -18,9 +18,10 @@ define(
     'tinymce.core.caret.CaretPosition',
     'tinymce.core.keyboard.BoundaryCaret',
     'tinymce.core.keyboard.BoundaryLocation',
-    'tinymce.core.keyboard.InlineUtils'
+    'tinymce.core.keyboard.InlineUtils',
+    'tinymce.core.selection.WordSelection'
   ],
-  function (Arr, Cell, Fun, CaretContainerRemove, CaretPosition, BoundaryCaret, BoundaryLocation, InlineUtils) {
+  function (Arr, Cell, Fun, CaretContainerRemove, CaretPosition, BoundaryCaret, BoundaryLocation, InlineUtils, WordSelection) {
     var setCaretPosition = function (editor, pos) {
       var rng = editor.dom.createRng();
       rng.setStart(pos.container(), pos.offset());
@@ -34,9 +35,9 @@ define(
 
     var setSelected = function (state, elm) {
       if (state) {
-        elm.setAttribute('data-mce-selected', '1');
+        elm.setAttribute('data-mce-selected', 'inline-boundary');
       } else {
-        elm.removeAttribute('data-mce-selected', '1');
+        elm.removeAttribute('data-mce-selected');
       }
     };
 
@@ -58,7 +59,7 @@ define(
     };
 
     var toggleInlines = function (isInlineTarget, dom, elms) {
-      var selectedInlines = Arr.filter(dom.select('*[data-mce-selected]'), isInlineTarget);
+      var selectedInlines = Arr.filter(dom.select('*[data-mce-selected="inline-boundary"]'), isInlineTarget);
       var targetInlines = Arr.filter(elms, isInlineTarget);
       Arr.each(Arr.difference(selectedInlines, targetInlines), Fun.curry(setSelected, false));
       Arr.each(Arr.difference(targetInlines, selectedInlines), Fun.curry(setSelected, true));
@@ -92,6 +93,12 @@ define(
       };
     };
 
+    var moveWord = function (forward, editor, caret) {
+      return function () {
+        return isFeatureEnabled(editor) ? WordSelection.moveByWord(forward, editor) : false;
+      };
+    };
+
     var setupSelectedState = function (editor) {
       var caret = new Cell(null);
       var isInlineTarget = Fun.curry(InlineUtils.isInlineTarget, editor);
@@ -109,6 +116,8 @@ define(
 
     return {
       move: move,
+      moveNextWord: Fun.curry(moveWord, true),
+      movePrevWord: Fun.curry(moveWord, false),
       setupSelectedState: setupSelectedState,
       setCaretPosition: setCaretPosition
     };
