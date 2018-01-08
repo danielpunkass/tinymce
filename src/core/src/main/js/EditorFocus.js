@@ -13,13 +13,15 @@ define(
   [
     'ephox.katamari.api.Option',
     'ephox.sugar.api.dom.Compare',
+    'ephox.sugar.api.dom.Focus',
     'ephox.sugar.api.node.Element',
+    'tinymce.core.Env',
     'tinymce.core.caret.CaretFinder',
     'tinymce.core.dom.ElementType',
     'tinymce.core.dom.RangeUtils',
-    'tinymce.core.Env'
+    'tinymce.core.selection.SelectionBookmark'
   ],
-  function (Option, Compare, Element, CaretFinder, ElementType, RangeUtils, Env) {
+  function (Option, Compare, Focus, Element, Env, CaretFinder, ElementType, RangeUtils, SelectionBookmark) {
     var getContentEditableHost = function (editor, node) {
       return editor.dom.getParent(node, function (node) {
         return editor.dom.getContentEditable(node) === "true";
@@ -69,15 +71,26 @@ define(
       }
     };
 
-    var focusEditor = function (editor) {
-      var selection = editor.selection, contentEditable = editor.settings.content_editable, rng;
-      var controlElm, doc = editor.getDoc(), body = editor.getBody(), contentEditableHost;
+    var hasElementFocus = function (elm) {
+      return Focus.hasFocus(elm) || Focus.search(elm).isSome();
+    };
 
-      // Get selected control element
-      rng = selection.getRng();
-      if (rng.item) {
-        controlElm = rng.item(0);
-      }
+    var hasIframeFocus = function (editor) {
+      return editor.iframeElement && Focus.hasFocus(Element.fromDom(editor.iframeElement));
+    };
+
+    var hasInlineFocus = function (editor) {
+      var rawBody = editor.getBody();
+      return rawBody && hasElementFocus(Element.fromDom(rawBody));
+    };
+
+    var hasFocus = function (editor) {
+      return editor.inline ? hasInlineFocus(editor) : hasIframeFocus(editor);
+    };
+
+    var focusEditor = function (editor) {
+      var selection = editor.selection, contentEditable = editor.settings.content_editable;
+      var body = editor.getBody(), contentEditableHost, rng = selection.getRng();
 
       editor.quirks.refreshContentEditable();
 
@@ -88,6 +101,13 @@ define(
         normalizeSelection(editor, rng);
         activateEditor(editor);
         return;
+      }
+
+      if (editor.bookmark !== undefined && hasFocus(editor) === false) {
+        SelectionBookmark.getRng(editor).each(function (bookmarkRng) {
+          editor.selection.setRng(bookmarkRng);
+          rng = bookmarkRng;
+        });
       }
 
       // Focus the window iframe
@@ -103,23 +123,8 @@ define(
 
       // Focus the body as well since it's contentEditable
       if (Env.gecko || contentEditable) {
-        // Restore previous selection before focus to prevent Chrome from
-        // jumping to the top of the document in long inline editors
-        if (contentEditable && document.activeElement !== body) {
-          editor.selection.setRng(editor.lastRng);
-        }
-
         focusBody(body);
         normalizeSelection(editor, rng);
-      }
-
-      // Restore selected control element
-      // This is needed when for example an image is selected within a
-      // layer a call to focus will then remove the control selection
-      if (controlElm && controlElm.ownerDocument === doc) {
-        rng = doc.body.createControlRange();
-        rng.addElement(controlElm);
-        rng.select();
       }
 
       activateEditor(editor);
@@ -138,7 +143,8 @@ define(
     };
 
     return {
-      focus: focus
+      focus: focus,
+      hasFocus: hasFocus
     };
   }
 );

@@ -17,15 +17,16 @@
 define(
   'tinymce.core.EditorCommands',
   [
+    'tinymce.core.Env',
+    'tinymce.core.InsertContent',
     'tinymce.core.delete.DeleteCommands',
     'tinymce.core.dom.NodeType',
     'tinymce.core.dom.RangeUtils',
     'tinymce.core.dom.TreeWalker',
-    'tinymce.core.Env',
-    'tinymce.core.InsertContent',
+    'tinymce.core.selection.SelectionBookmark',
     'tinymce.core.util.Tools'
   ],
-  function (DeleteCommands, NodeType, RangeUtils, TreeWalker, Env, InsertContent, Tools) {
+  function (Env, InsertContent, DeleteCommands, NodeType, RangeUtils, TreeWalker, SelectionBookmark, Tools) {
     // Added for compression purposes
     var each = Tools.each, extend = Tools.extend;
     var map = Tools.map, inArray = Tools.inArray, explode = Tools.explode;
@@ -64,6 +65,8 @@ define(
 
         if (!/^(mceAddUndoLevel|mceEndUndoLevel|mceBeginUndoLevel|mceRepaint)$/.test(command) && (!args || !args.skip_focus)) {
           editor.focus();
+        } else {
+          SelectionBookmark.restore(editor);
         }
 
         args = editor.fire('BeforeExecCommand', { command: command, ui: ui, value: value });
@@ -549,25 +552,11 @@ define(
         },
 
         selectAll: function () {
-          var root = dom.getRoot(), rng;
-
-          if (selection.getRng().setStart) {
-            var editingHost = dom.getParent(selection.getStart(), NodeType.isContentEditableTrue);
-            if (editingHost) {
-              rng = dom.createRng();
-              rng.selectNodeContents(editingHost);
-              selection.setRng(rng);
-            }
-          } else {
-            // IE will render it's own root level block elements and sometimes
-            // even put font elements in them when the user starts typing. So we need to
-            // move the selection to a more suitable element from this:
-            // <body>|<p></p></body> to this: <body><p>|</p></body>
-            rng = selection.getRng();
-            if (!rng.item) {
-              rng.moveToElementText(root);
-              rng.select();
-            }
+          var editingHost = dom.getParent(selection.getStart(), NodeType.isContentEditableTrue);
+          if (editingHost) {
+            var rng = dom.createRng();
+            rng.selectNodeContents(editingHost);
+            selection.setRng(rng);
           }
         },
 

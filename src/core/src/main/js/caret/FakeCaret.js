@@ -17,16 +17,15 @@
 define(
   'tinymce.core.caret.FakeCaret',
   [
+    'global!clearInterval',
     'tinymce.core.caret.CaretContainer',
     'tinymce.core.caret.CaretContainerRemove',
-    'tinymce.core.caret.CaretPosition',
     'tinymce.core.dom.DomQuery',
     'tinymce.core.dom.NodeType',
-    'tinymce.core.dom.RangeUtils',
     'tinymce.core.geom.ClientRect',
     'tinymce.core.util.Delay'
   ],
-  function (CaretContainer, CaretContainerRemove, CaretPosition, DomQuery, NodeType, RangeUtils, ClientRect, Delay) {
+  function (clearInterval, CaretContainer, CaretContainerRemove, DomQuery, NodeType, ClientRect, Delay) {
     var isContentEditableFalse = NodeType.isContentEditableFalse;
 
     var isTableCell = function (node) {
@@ -34,7 +33,7 @@ define(
     };
 
     return function (rootNode, isBlock) {
-      var cursorInterval, $lastVisualCaret, caretContainerNode;
+      var cursorInterval, $lastVisualCaret = null, caretContainerNode;
 
       function getAbsoluteClientRect(node, before) {
         var clientRect = ClientRect.collapse(node.getBoundingClientRect(), before),
@@ -162,9 +161,17 @@ define(
         clearInterval(cursorInterval);
       }
 
+      var hasFocus = function () {
+        return rootNode.ownerDocument.activeElement === rootNode;
+      };
+
       function startBlink() {
         cursorInterval = Delay.setInterval(function () {
-          DomQuery('div.mce-visual-caret', rootNode).toggleClass('mce-visual-caret-hidden');
+          if (hasFocus()) {
+            DomQuery('div.mce-visual-caret', rootNode).toggleClass('mce-visual-caret-hidden');
+          } else {
+            DomQuery('div.mce-visual-caret', rootNode).addClass('mce-visual-caret-hidden');
+          }
         }, 500);
       }
 
