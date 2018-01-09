@@ -650,6 +650,8 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('@ephox/bolt');
   grunt.loadNpmTasks('@ephox/bedrock');
 
+  grunt.registerTask("redsweater", ["clean:scratch", "subgrunt:core", "subgrunt:ui", "subgrunt:paste-plugin", "subgrunt:redsweater-plugin", "subgrunt:lightgray-skin", "subgrunt:redsweater-skin", "subgrunt:modern-theme", "copy", "build-headers", "validateVersion"]);
+
   grunt.registerTask("default", ["clean:scratch", "subgrunt", "copy", "build-headers", "validateVersion", "clean:release", "moxiezip", "nugetpack", "version"]);
 
   grunt.registerTask("test", ["bedrock-auto:phantomjs"]);
