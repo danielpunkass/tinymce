@@ -103,7 +103,7 @@ define(
                   // Zap the two BR nodes that led to this condition, but do so after a delay so
                   // the TinyMCE code that is currently inserting these breaks doesn't hit an exception
                   // trying to work with the added BR
-                 window.setTimeout(function (par, first, second) {
+                 window.setTimeout(function (par, first, second) { // eslint-disable-line no-undef
                    par.removeChild(first);
                    par.removeChild(second);
 
