@@ -42,7 +42,7 @@ define(
     var setup = function (editor) {
       editor.on('keydown', function (event) {
         // Don't allow enter key with command key modifier to be interpreted as a newline.
-        if ((event.keyCode === VK.ENTER) && (event.metaKey === false)) {
+        if ((event.keyCode === VK.ENTER) && (event.metaKey != true)) {
           handleEnterKeyEvent(editor, event);
         }
       });
