@@ -31,6 +31,16 @@ body {
 	padding:0px;
 }
 
+/* Ensure the body and html nodes are 100% height to avoid a problem where */
+/* Images can't be dragged top them. */
+body {
+	height: 100%;
+}
+
+html {
+	height: 100%;
+}
+
 /* First paragraph in the body should run flush against the top */
 body p:first-child {
 	margin-top:0;
