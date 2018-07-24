@@ -60,6 +60,7 @@ define(
 
       Attr.setAll(iframe, {
         id: id + '_ifr',
+        name: id + '_ifr',
         frameBorder: '0',
         allowTransparency: 'true',
         title: title
