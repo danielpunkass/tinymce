@@ -296,14 +296,17 @@ const registerEventHandlers = (editor: Editor, pasteBin: PasteBin, pasteFormat: 
     if (hasContentType(clipboardContent, 'text/html')) {
       content = clipboardContent['text/html'];
     } else {
-      content = pasteBin.getHtml();
-      internal = internal ? internal : InternalHtml.isMarked(content);
-
-      // If paste bin is empty try using plain text mode
-      // since that is better than nothing right
-      if (pasteBin.isDefaultContent(content)) {
-        plainTextMode = true;
-      }
+      // We never use the pastebin so just force plainTextMode
+      plainTextMode = true;
+      content = clipboardContent['text/plain'];
+//      content = pasteBin.getHtml();
+//      internal = internal ? internal : InternalHtml.isMarked(content);
+//
+//      // If paste bin is empty try using plain text mode
+//      // since that is better than nothing right
+//      if (pasteBin.isDefaultContent(content)) {
+//        plainTextMode = true;
+//      }
     }
 
     content = Utils.trimHtml(content);
@@ -350,6 +353,20 @@ const registerEventHandlers = (editor: Editor, pasteBin: PasteBin, pasteFormat: 
     return pasteBin.getLastRng() || editor.selection.getRng();
   };
 
+  // If the command being executed is literally PasteAsPlainText then trigger the
+  // plain text option until further notice. This works around a bug in which the
+  // command is not handled correctly on Mac if the keyboard shortcut is not pressed when invoking it.
+  function isPastePlainTextCommand(command) {
+    return (command.toLowerCase() === 'pasteasplaintext');
+  }
+
+  editor.on('BeforeExecCommand', function (e) {
+    if (isPastePlainTextCommand(e.command)) {
+      self.pasteFormat = 'text';
+    }
+    return true;
+  });
+
   editor.on('paste', function (e) {
     // Getting content from the Clipboard can take some time
     const clipboardTimer = new Date().getTime();
@@ -360,6 +377,8 @@ const registerEventHandlers = (editor: Editor, pasteBin: PasteBin, pasteFormat: 
     const plainTextMode = pasteFormat.get() === 'text' || keyboardPastePlainTextState;
     let internal = hasContentType(clipboardContent, InternalHtml.internalHtmlMime());
 
+    // Reset ephemeral flags
+    self.pasteFormat = undefined;
     keyboardPastePlainTextState = false;
 
     if (e.isDefaultPrevented() || isBrokenAndroidClipboardEvent(e)) {
@@ -400,6 +419,9 @@ const registerEventHandlers = (editor: Editor, pasteBin: PasteBin, pasteFormat: 
 
       insertClipboardContent(clipboardContent, isKeyBoardPaste, plainTextMode, internal);
     } else {
+      // Since we never use the pastebin on Red Sweater branch, we want to prevent the default in both cases
+      // to avoid a double-paste behavior.
+      e.preventDefault();
       Delay.setEditorTimeout(editor, function () {
         insertClipboardContent(clipboardContent, isKeyBoardPaste, plainTextMode, internal);
       }, 0);

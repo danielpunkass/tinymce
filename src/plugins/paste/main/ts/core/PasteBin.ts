@@ -35,34 +35,36 @@ const delegatePasteEvents = (editor: Editor, pasteBinElm: Element, pasteBinDefau
  * instead of the current editor selection element.
  */
 const create = (editor: Editor, lastRngCell, pasteBinDefaultContent: string) => {
-  const dom = editor.dom, body = editor.getBody();
-  let pasteBinElm;
+// PASTEBIN COMPLETELY DISABLED ON RED SWEATER BRANCH
 
-  lastRngCell.set(editor.selection.getRng());
-
-  // Create a pastebin
-  pasteBinElm = editor.dom.add(getPasteBinParent(editor), 'div', {
-    'id': 'mcepastebin',
-    'class': 'mce-pastebin',
-    'contentEditable': true,
-    'data-mce-bogus': 'all',
-    'style': 'position: fixed; top: 50%; width: 10px; height: 10px; overflow: hidden; opacity: 0'
-  }, pasteBinDefaultContent);
-
-  // Move paste bin out of sight since the controlSelection rect gets displayed otherwise on IE and Gecko
-  if (Env.ie || Env.gecko) {
-    dom.setStyle(pasteBinElm, 'left', dom.getStyle(body, 'direction', true) === 'rtl' ? 0xFFFF : -0xFFFF);
-  }
-
-  // Prevent focus events from bubbeling fixed FocusManager issues
-  dom.bind(pasteBinElm, 'beforedeactivate focusin focusout', function (e) {
-    e.stopPropagation();
-  });
-
-  delegatePasteEvents(editor, pasteBinElm, pasteBinDefaultContent);
-
-  pasteBinElm.focus();
-  editor.selection.select(pasteBinElm, true);
+//  const dom = editor.dom, body = editor.getBody();
+//  let pasteBinElm;
+//
+//  lastRngCell.set(editor.selection.getRng());
+//
+//  // Create a pastebin
+//  pasteBinElm = editor.dom.add(getPasteBinParent(editor), 'div', {
+//    'id': 'mcepastebin',
+//    'class': 'mce-pastebin',
+//    'contentEditable': true,
+//    'data-mce-bogus': 'all',
+//    'style': 'position: fixed; top: 50%; width: 10px; height: 10px; overflow: hidden; opacity: 0'
+//  }, pasteBinDefaultContent);
+//
+//  // Move paste bin out of sight since the controlSelection rect gets displayed otherwise on IE and Gecko
+//  if (Env.ie || Env.gecko) {
+//    dom.setStyle(pasteBinElm, 'left', dom.getStyle(body, 'direction', true) === 'rtl' ? 0xFFFF : -0xFFFF);
+//  }
+//
+//  // Prevent focus events from bubbeling fixed FocusManager issues
+//  dom.bind(pasteBinElm, 'beforedeactivate focusin focusout', function (e) {
+//    e.stopPropagation();
+//  });
+//
+//  delegatePasteEvents(editor, pasteBinElm, pasteBinDefaultContent);
+//
+//  pasteBinElm.focus();
+//  editor.selection.select(pasteBinElm, true);
 };
 
 /**

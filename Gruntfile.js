@@ -844,20 +844,18 @@ module.exports = function (grunt) {
   grunt.registerTask('default', ['prod']);
   grunt.registerTask('test', ['bedrock-auto:phantomjs']);
 
+  // Custom build target for redsweater purposes
   grunt.registerTask('redsweater', [
     'clean:scratch',
     'shell:tsc',
     'tslint',
     'globals',
-    'rollup',
+	'rollup:core',
+	'rollup:paste-plugin',
+    'rollup:redsweater-plugin',
     'uglify',
     'less',
-    'copy',
-    'build-headers',
-    'clean:release',
-    'moxiezip',
-    'nugetpack',
-    'version'
+    'copy'
   ]);
 
   grunt.registerTask("redsweater2", ["clean:scratch", "subgrunt:core", "subgrunt:ui", "subgrunt:paste-plugin", "subgrunt:redsweater-plugin", "subgrunt:lightgray-skin", "subgrunt:redsweater-skin", "subgrunt:modern-theme", "copy", "build-headers", "validateVersion"]);
