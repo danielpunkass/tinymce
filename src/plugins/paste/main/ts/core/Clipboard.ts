@@ -247,6 +247,7 @@ const registerEventHandlers = (editor: Editor, pasteBin: PasteBin, pasteFormat: 
   let keyboardPastePlainTextState;
 
   editor.on('keydown', function (e) {
+
     function removePasteBinOnKeyUp(e) {
       // Ctrl+V or Shift+Insert
       if (isKeyboardPasteEvent(e) && !e.isDefaultPrevented()) {
@@ -362,7 +363,7 @@ const registerEventHandlers = (editor: Editor, pasteBin: PasteBin, pasteFormat: 
 
   editor.on('BeforeExecCommand', function (e) {
     if (isPastePlainTextCommand(e.command)) {
-      self.pasteFormat = 'text';
+      pasteFormat.set('text');
     }
     return true;
   });
@@ -378,7 +379,7 @@ const registerEventHandlers = (editor: Editor, pasteBin: PasteBin, pasteFormat: 
     let internal = hasContentType(clipboardContent, InternalHtml.internalHtmlMime());
 
     // Reset ephemeral flags
-    self.pasteFormat = undefined;
+    pasteFormat.set(undefined);
     keyboardPastePlainTextState = false;
 
     if (e.isDefaultPrevented() || isBrokenAndroidClipboardEvent(e)) {
