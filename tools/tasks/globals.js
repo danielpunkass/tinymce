@@ -24,7 +24,7 @@ var fail = function (msg) {
 };
 
 var required = function (config, propName) {
-  var failMsg = 'Required property "' + propName + '"not defined in:\n' + JSON.stringify(config, null, '  ');
+  var failMsg = 'Required property \'' + propName + '\' not defined in:\n' + JSON.stringify(config, null, '  ');
   return propName in config ? config[propName] : fail(failMsg);
 };
 
@@ -32,7 +32,8 @@ var createTargetInfo = function (filePath, targetId, globalId) {
   return {
     filePath: filePath,
     targetId: targetId,
-    globalId: globalId
+    globalId: globalId,
+    globalName: globalId.split('.').pop()
   };
 };
 
@@ -52,12 +53,9 @@ var replaceVariables = function (str, variables) {
   return str;
 };
 
-var generateGlobaliserModule = function (templateFile, filePath, targetId, globalId) {
+var generateGlobaliserModule = function (templateFile, targetInfo) {
   var template = readFile(templateFile);
-  writeFile(filePath + '.js', replaceVariables(template, {
-    targetId: targetId,
-    globalId: globalId
-  }));
+  writeFile(targetInfo.filePath + '.js', replaceVariables(template, targetInfo));
 };
 
 var replacePrefixes = function (id, search, replace) {
@@ -75,22 +73,23 @@ var replacePrefix = function (grunt, templateFile, outputPath, config) {
     .map(targetIdToTargetInfo(outputPath, id => replacePrefixes(id, search, replace)))
     .forEach(function (targetInfo) {
       mkdirp(grunt, path.dirname(targetInfo.filePath));
-      generateGlobaliserModule(templateFile, targetInfo.filePath, targetInfo.targetId, targetInfo.globalId);
+      generateGlobaliserModule(templateFile, targetInfo);
     });
 };
 
 var executeAction = function (grunt, action, templateFile, outputPath, config) {
-  if (action === "replace.prefix") {
+  if (action === 'replace.prefix') {
     replacePrefix(grunt, templateFile, outputPath, config);
   }
 };
 
 module.exports = function (grunt) {
-  grunt.registerTask("globals", "Generates a globals layer", function () {
-    var config = parseConfig('config/globals.json');
+  grunt.registerTask('globals', 'Generates a globals layer', function () {
     var options = grunt.config([this.name]).options;
     var templateFile = required(options, 'templateFile');
     var outputDir = required(options, 'outputDir');
+    var configJson = required(options, 'configFile');
+    var config = parseConfig(configJson);
 
     Object.keys(config).forEach(function (action) {
       executeAction(grunt, action, templateFile, outputDir, config[action]);
