@@ -66,21 +66,21 @@ UnitTest.asynctest('browser.tinymce.core.FormatterApplyTest', function () {
     LegacyUnit.equal(getContent(editor), '<p>1<b>23</b>4</p>');
   });
 
-   suite.test('apply to completely selected list item', function (editor) {
-     var rng = editor.dom.createRng();
-     editor.formatter.register('format', { inline : 'b', toggle: false });
+  suite.test('apply to completely selected list item', function (editor) {
+   let rng = editor.dom.createRng();
+   editor.formatter.register('format', { inline : 'b', toggle: false });
 
-     // The third list item needs to have > 1 children to exercise the problem
-     editor.setContent('<ul><li>Item 1</li><li>Item 2</li><li>Item <i>3</i></li></ul>');
+   // The third list item needs to have > 1 children to exercise the problem
+   editor.setContent('<ul><li>Item 1</li><li>Item 2</li><li>Item <i>3</i></li></ul>');
 
-     // Select the entire second list item through to just the start of the third. This simulates triple-clicking in Safari.
-     rng = editor.dom.createRng();
-     rng.setStart(editor.getBody().firstChild.children[1], 0);
-     rng.setEnd(editor.getBody().firstChild.children[2], 0);
-     editor.selection.setRng(rng);
-     editor.formatter.apply('format');
-     LegacyUnit.equal(editor.getContent(), '<ul><li>Item 1</li><li><b>Item 2</b></li><li>Item <i>3</i></li></ul>');
-   });
+   // Select the entire second list item through to just the start of the third. This simulates triple-clicking in Safari.
+   rng = editor.dom.createRng();
+   rng.setStart(editor.getBody().firstChild.children[1], 0);
+   rng.setEnd(editor.getBody().firstChild.children[2], 0);
+   editor.selection.setRng(rng);
+   editor.formatter.apply('format');
+   LegacyUnit.equal(editor.getContent(), '<ul><li>Item 1</li><li><b>Item 2</b></li><li>Item <i>3</i></li></ul>');
+  });
 
   suite.test('Toggle OFF - Inline element on partially selected text in start/end elements', function (editor) {
     // Toggle OFF - Inline element on partially selected text in start/end elements

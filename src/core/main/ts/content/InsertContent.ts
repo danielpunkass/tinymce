@@ -244,9 +244,9 @@ const insertHtmlAtCaret = function (editor: Editor, value: string, details) {
   // quite aggressive, for example it will delete a second bookmark span,
   // wreaking havoc with custom attempts to get and restore a bookmark e.g.
   // around a mceInsertContent command invocation.
-  var doWorkaround = false;
+  const doWorkaround = false;
   if (doWorkaround) {
-//if (!selection.isCollapsed()) {
+  // if (!selection.isCollapsed()) {
     // Fix for #2595 seems that delete removes one extra character on
     // WebKit for some odd reason if you double click select a word
     editor.selection.setRng(RangeNormalizer.normalize(editor.selection.getRng()));

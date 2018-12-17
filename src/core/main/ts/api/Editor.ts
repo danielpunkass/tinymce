@@ -694,7 +694,7 @@ Editor.prototype = {
     // by a host app on the Mac. It would be cool to see this set up more as a delegation
     // callback to the editor's host, allowing each one to allow or refuse a shortcut to
     // be added.
-    var allowShortcut = false;
+    const allowShortcut = false;
     if (allowShortcut) {
       this.shortcuts.add(pattern, desc, cmdFunc, scope);
     }

@@ -241,7 +241,7 @@ export default function (editor: Editor) {
       }
 
       // Set before bookmark on previous level
-       if (data[index] && beforeBookmark) {
+      if (data[index] && beforeBookmark) {
         data[index].beforeBookmark = beforeBookmark;
       }
 

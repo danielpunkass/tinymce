@@ -39,7 +39,7 @@ const handleEnterKeyEvent = function (editor: Editor, event: EditorEvent<Keyboar
 const setup = function (editor: Editor) {
   editor.on('keydown', function (event: EditorEvent<KeyboardEvent>) {
   // Don't allow enter key with command key modifier to be interpreted as a newline.
-  if ((event.keyCode === VK.ENTER) && (event.metaKey != true)) {
+  if ((event.keyCode === VK.ENTER) && (event.metaKey !== true)) {
       handleEnterKeyEvent(editor, event);
     }
   });
