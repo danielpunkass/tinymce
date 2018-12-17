@@ -231,12 +231,17 @@ export default function (editor: Editor) {
       }
 
       // Add undo level if needed
+
+      // Clear it out so we don't set it again if we e.g. have an add that doesn't correlate to
+      // a beforeBookmark setting.
+      beforeBookmark = null;
+
       if (lastLevel && Levels.isEq(lastLevel, level)) {
         return null;
       }
 
       // Set before bookmark on previous level
-      if (data[index]) {
+       if (data[index] && beforeBookmark) {
         data[index].beforeBookmark = beforeBookmark;
       }
 

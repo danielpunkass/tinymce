@@ -689,7 +689,15 @@ Editor.prototype = {
    * @return {Boolean} true/false state if the shortcut was added or not.
    */
   addShortcut (pattern, desc, cmdFunc, scope) {
-    this.shortcuts.add(pattern, desc, cmdFunc, scope);
+    // In The Red Sweater deployment we strictly control the keyboard shortcuts that
+    // we want to actually be applied, because so much of our keyboard handling is done
+    // by a host app on the Mac. It would be cool to see this set up more as a delegation
+    // callback to the editor's host, allowing each one to allow or refuse a shortcut to
+    // be added.
+    var allowShortcut = false;
+    if (allowShortcut) {
+      this.shortcuts.add(pattern, desc, cmdFunc, scope);
+    }
   },
 
   /**

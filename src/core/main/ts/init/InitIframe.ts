@@ -48,8 +48,12 @@ const createIframeElement = function (id, title, height, customAttrs) {
 
   Attr.setAll(iframe, customAttrs);
 
+  // Workaround WebKit regression in which findFrameNamed: no longer works to find the TinyMCE editor frame by it's ID,
+  // because the frame's name is only considered to be set by the name attribute. See: https://bugs.webkit.org/show_bug.cgi?id=187937
+  // Need to define "name" below to accommodate it.
   Attr.setAll(iframe, {
     id: id + '_ifr',
+    name: id + '_ifr',
     frameBorder: '0',
     allowTransparency: 'true',
     title
