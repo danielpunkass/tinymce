@@ -332,10 +332,29 @@ export default function (settings?, schema = Schema()) {
         return;
       }
 
+      // Copied from ForceBlocks.ts - we have an inconsistency in the application of top level blocks, depending
+      // on whether the blocks are forced at document parse time vs. user-edit time. We should disregard "empty"
+      // text nodes at the parse level, too, since they end up appearing for things like newlines between two comment
+      // nodes.
+      const isBlockElement = function (blockElements, node) {
+        return blockElements.hasOwnProperty(node.name);
+      };
+      // Pretty specialized to a case we want to fix wherein the white space between two
+      // comment nodes is treated like text that needs to be wrapped. We special case whitespace
+      // that either is followed by a block element or another comment node.
+      const shouldIgnoreTextNode = (blockElements, textNode) => {
+        if (node.value.length === 0) {
+          return true;
+        } else if (/^\s+$/.test(node.value) && (!node.next || isBlockElement(blockElements, node.next) || (node.next.type === 8))) {
+          return true;
+        }
+        return false;
+      };
+
       while (node) {
         next = node.next;
 
-        if (node.type === 3 || (node.type === 1 && node.name !== 'p' &&
+        if (((node.type === 3) && !shouldIgnoreTextNode(blockElements, node)) || (node.type === 1 && node.name !== 'p' &&
           !blockElements[node.name] && !node.attr('data-mce-type'))) {
           if (!rootBlockNode) {
             // Create a new root block element
@@ -439,7 +458,12 @@ export default function (settings?, schema = Schema()) {
 
         // Trim all redundant whitespace on non white space elements
         if (!isInWhiteSpacePreservedElement) {
-          text = text.replace(allWhiteSpaceRegExp, ' ');
+          // Special case - if the text is preceded by a comment node, leave the
+          // white space as is to avoid, e.g. merging two WordPress Gutenberg
+          // block comments onto a single line.
+          if ((node.lastChild != null) && node.lastChild.type !== 8) {
+            text = text.replace(allWhiteSpaceRegExp, ' ');
+          }
 
           if (isLineBreakNode(node.lastChild, blockElements)) {
             text = text.replace(startWhiteSpaceRegExp, '');

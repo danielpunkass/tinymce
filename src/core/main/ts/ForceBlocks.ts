@@ -53,6 +53,18 @@ const shouldRemoveTextNode = (blockElements, node) => {
   return false;
 };
 
+const shouldIgnoreTextNode = (blockElements, node) => {
+    if (NodeType.isText(node)) {
+        if (node.nodeValue.length === 0) {
+            return true;
+        } else if (/^\s+$/.test(node.nodeValue) && (!node.previousSibling || NodeType.isComment(node.previousSibling)) && (!node.nextSibling || NodeType.isComment(node.nextSibling))) {
+            return true;
+        }
+    }
+
+    return false;
+};
+
 const addRootBlocks = function (editor) {
   const settings = editor.settings, dom = editor.dom, selection = editor.selection;
   const schema = editor.schema, blockElements = schema.getBlockElements();
@@ -91,6 +103,14 @@ const addRootBlocks = function (editor) {
         tempNode = node;
         node = node.nextSibling;
         dom.remove(tempNode);
+        continue;
+      }
+
+      // Kind of a special case until we can think this through more - don't remove, but
+      // ignore text nodes that are sandwiched between two comment nodes as occurs with
+      // Gutenberg blocks by default.
+      if (shouldIgnoreTextNode(blockElements, node)) {
+        node = node.nextSibling;
         continue;
       }
 
