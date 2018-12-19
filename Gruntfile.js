@@ -207,7 +207,7 @@ module.exports = function (grunt) {
           optimization: 2
         },
         files: {
-          'js/tinymce/skins/lightgray/skin.min.css': 'src/skins/lightgray/main/less/desktop/Skin.less'
+          'js/tinymce/skins/redsweater/skin.min.css': 'src/skins/redsweater/main/less/desktop/Skin.less'
         }
       },
       mobile: {
@@ -220,7 +220,7 @@ module.exports = function (grunt) {
           optimization: 2
         },
         files: {
-          'js/tinymce/skins/lightgray/skin.mobile.min.css': 'src/skins/lightgray/main/less/mobile/app/mobile-less.less'
+          'js/tinymce/skins/redsweater/skin.mobile.min.css': 'src/skins/redsweater/main/less/mobile/app/mobile-less.less'
         }
       },
       'content-mobile': {
@@ -230,7 +230,7 @@ module.exports = function (grunt) {
           compress: true
         },
         files: {
-          'js/tinymce/skins/lightgray/content.mobile.min.css': 'src/skins/lightgray/main/less/mobile/content.less'
+          'js/tinymce/skins/redsweater/content.mobile.min.css': 'src/skins/redsweater/main/less/mobile/content.less'
         }
       },
       content: {
@@ -240,7 +240,7 @@ module.exports = function (grunt) {
           compress: true
         },
         files: {
-          'js/tinymce/skins/lightgray/content.min.css': 'src/skins/lightgray/main/less/desktop/Content.less'
+          'js/tinymce/skins/redsweater/content.min.css': 'src/skins/redsweater/main/less/desktop/Content.less'
         }
       },
       'content-inline': {
@@ -250,7 +250,7 @@ module.exports = function (grunt) {
           compress: true
         },
         files: {
-          'js/tinymce/skins/lightgray/content.inline.min.css': 'src/skins/lightgray/main/less/desktop/Content.Inline.less'
+          'js/tinymce/skins/redsweater/content.inline.min.css': 'src/skins/redsweater/main/less/desktop/Content.Inline.less'
         }
       }
     },
@@ -289,20 +289,20 @@ module.exports = function (grunt) {
           {
             expand: true,
             flatten: true,
-            cwd: 'src/skins/lightgray/main/fonts',
+            cwd: 'src/skins/redsweater/main/fonts',
             src: [
               '**',
               '!*.json',
               '!*.md'
             ],
-            dest: 'js/tinymce/skins/lightgray/fonts'
+            dest: 'js/tinymce/skins/redsweater/fonts'
           },
           {
             expand: true,
             flatten: true,
-            cwd: 'src/skins/lightgray/main/img',
+            cwd: 'src/skins/redsweater/main/img',
             src: '**',
-            dest: 'js/tinymce/skins/lightgray/img'
+            dest: 'js/tinymce/skins/redsweater/img'
           }
         ]
       },
@@ -790,7 +790,7 @@ module.exports = function (grunt) {
 
     watch: {
       skins: {
-        files: ['src/skins/lightgray/main/less/**/*'],
+        files: ['src/skins/redsweater/main/less/**/*'],
         tasks: ['less', 'copy:skins'],
         options: {
           spawn: false
@@ -853,10 +853,11 @@ module.exports = function (grunt) {
     'rollup:core',
     'rollup:paste-plugin',
     'rollup:redsweater-plugin',
-    'uglify',
+    'uglify:core',
+    'uglify:paste-plugin',
+    'uglify:redsweater-plugin',
     'less',
     'copy'
   ]);
 
-  grunt.registerTask("redsweater2", ["clean:scratch", "subgrunt:core", "subgrunt:ui", "subgrunt:paste-plugin", "subgrunt:redsweater-plugin", "subgrunt:lightgray-skin", "subgrunt:redsweater-skin", "subgrunt:modern-theme", "copy", "build-headers", "validateVersion"]);
 };
