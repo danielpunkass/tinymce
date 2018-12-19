@@ -853,9 +853,11 @@ module.exports = function (grunt) {
     'rollup:core',
     'rollup:paste-plugin',
     'rollup:redsweater-plugin',
+    'rollup:modern-theme',
     'uglify:core',
     'uglify:paste-plugin',
     'uglify:redsweater-plugin',
+    'uglify:modern-theme',
     'less',
     'copy'
   ]);
