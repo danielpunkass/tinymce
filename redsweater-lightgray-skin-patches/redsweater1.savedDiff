@@ -1,3 +1,9 @@
+-From 3e6614a1520bc06781522779087e1d35868ca7cc Mon Sep 17 00:00:00 2001
+-From: Daniel Jalkut <jalkut@red-sweater.com>
+-Date: Tue, 20 May 2014 21:00:01 -0400
+-Subject: [PATCH] Tweaks to match our previous stylistic changes from TinyMCE3.
+
+--
 diff --git a/src/skins/redsweater/main/less/desktop/Container.less b/src/skins/redsweater/main/less/desktop/Container.less
 index 0a17c1534..a08c20eb5 100644
 --- a/src/skins/redsweater/main/less/desktop/Container.less
@@ -12,7 +18,7 @@ index 78594ef0f..33fd8928c 100644
 --- a/src/skins/redsweater/main/less/desktop/Content.less
 +++ b/src/skins/redsweater/main/less/desktop/Content.less
 @@ -25,3 +25,68 @@ td, th {
- 
+
  @import "Mixins.less";
  @import "Content.Objects.less";
 +
@@ -86,7 +92,7 @@ index bade34d37..67a9dfda8 100644
 +++ b/src/skins/redsweater/main/less/desktop/Panel.less
 @@ -1,7 +1,7 @@
  // Panel
- 
+
  .@{prefix}-panel {
 -  border: 0 solid mix(rgb(red(@panel-border), green(@panel-border), blue(@panel-border)), @panel-bg, 20%);
 -  border: 0 solid @panel-border;

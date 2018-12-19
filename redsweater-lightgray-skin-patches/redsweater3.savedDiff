@@ -5,14 +5,14 @@ Subject: [PATCH] Disable selection highlighting of clicked images as the
  resize handles do a good enough job of indicating selection.
 
 ---
- redsweater/Content.less | 7 +++++++
+ redsweater/main/less/desktop/Content.less | 7 +++++++
  1 file changed, 7 insertions(+)
 
-diff --git a/redsweater/Content.less b/redsweater/Content.less
-index ecde687..f828292 100644
---- a/redsweater/Content.less
-+++ b/redsweater/Content.less
-@@ -77,3 +77,10 @@ td, pre {margin:8px;}
+diff --git a/src/skins/redsweater/main/less/desktop/Content.less b/src/skins/redsweater/main/less/desktop/Content.less
+index 33fd8928c..c977961f1 100644
+--- a/src/skins/redsweater/main/less/desktop/Content.less
++++ b/src/skins/redsweater/main/less/desktop/Content.less
+@@ -90,3 +81,10 @@ td, pre {margin:8px;}
  	font-family:"Lucida Grande";
  	-webkit-user-select:none;
  }
@@ -23,6 +23,3 @@ index ecde687..f828292 100644
 +img::selection {
 +	background-color: transparent;
 +}
--- 
-2.3.7 (Apple Git-57)
-

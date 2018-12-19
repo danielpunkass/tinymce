@@ -3,10 +3,6 @@
 @import "Variables.less";
 
 body {
-  background-color: #FFFFFF;
-  color: #000000;
-  font-family: @content-font-family;
-  font-size: @content-font-size;
   line-height: @content-line-height;
   scrollbar-3dlight-color: #F0F0EE;
   scrollbar-arrow-color: #676662;
@@ -16,11 +12,6 @@ body {
   scrollbar-highlight-color: #F0F0EE;
   scrollbar-shadow-color: #F0F0EE;
   scrollbar-track-color: #F5F5F5;
-}
-
-td, th {
-  font-family: @content-font-family;
-  font-size: @content-font-size;
 }
 
 @import "Mixins.less";
@@ -89,4 +80,11 @@ td, pre {margin:8px;}
 	font-size:11px;
 	font-family:"Lucida Grande";
 	-webkit-user-select:none;
+}
+
+/* Style the image resizing/editing controls to suit us */
+
+// Avoid selection indicator when focused on an image
+img::selection {
+	background-color: transparent;
 }
