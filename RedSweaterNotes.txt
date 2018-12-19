@@ -1,10 +1,9 @@
 
 "redsweater" skin
 
-In our fork of TinyMCE we maintain a collection of manually applicable patches that can be used to create a modified version of the lightgray theme that meets our expectations. The patches should be applied by literally copying lightgray, then applying each patch in "redsweater-lightgray-skin-patches"
+In our fork of TinyMCE we maintain a collection of manually applicable patches that can be used to create a modified version of the lightgray theme that meets our expectations. The patches should be applied by literally copying lightgray, then applying each patch in "redsweater-lightgray-skin-patches". After appyling each patch, do a git diff on redsweater to update the pertinent patch. (MAYBE we should just do a single diff after all applied?)
 
 other changes
 
 Other changes have been made throughout the JavaScript tree and should be perpetuated whenever we merge with upstream.
 
-src/core/src/test/ts
