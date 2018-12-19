@@ -1,8 +1,8 @@
-diff --git a/js/tinymce/skins/redsweater/Content.less b/js/tinymce/skins/redsweater/Content.less
-index 339f79e..7367dd1 100644
---- a/js/tinymce/skins/redsweater/Content.less
-+++ b/js/tinymce/skins/redsweater/Content.less
-@@ -79,9 +79,22 @@ td, pre {margin:8px;}
+diff --git a/src/skins/redsweater/main/less/desktop/Content.less b/src/skins/redsweater/main/less/desktop/Content.less
+index c977961f1..8dfe7d9c0 100644
+--- a/src/skins/redsweater/main/less/desktop/Content.less
++++ b/src/skins/redsweater/main/less/desktop/Content.less
+@@ -82,9 +82,22 @@ td, pre {margin:8px;}
  	-webkit-user-select:none;
  }
  
