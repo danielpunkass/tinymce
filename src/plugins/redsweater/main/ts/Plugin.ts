@@ -11,6 +11,7 @@
 
 import PluginManager from 'tinymce/core/api/PluginManager';
 import Tools from 'tinymce/core/api/util/Tools';
+import VK from 'tinymce/core/api/util/VK';
 
 PluginManager.add('redsweater', function (editor) {
 
@@ -122,6 +123,26 @@ PluginManager.add('redsweater', function (editor) {
      editor.getBody().addEventListener('DOMNodeInserted', nodeInserted, false);
    });
 
+   // Until and unless we start using the lists plugin (which has some unwanted interactions)
+   // we have to make sure tab and shift-tab get handled natively, since TinyMCE explicitly avoids
+   // calling execNativeCommand for this scenario.
+   editor.on('keydown', function (e) {
+     // Check for tab but not ctrl/cmd+tab since it switches browser tabs
+     if (e.keyCode !== VK.TAB || VK.metaKeyPressed(e)) {
+       return;
+     }
+
+     if (editor.queryCommandState('InsertUnorderedList') || editor.queryCommandState('InsertOrderedList')) {
+       e.preventDefault();
+       editor.undoManager.transact(() => {
+         if (e.shiftKey) {
+           editor.getDoc().execCommand('Outdent');
+         } else {
+           editor.getDoc().execCommand('Indent');
+         }
+       });
+     }
+   });
 });
 
 export default function () { }
