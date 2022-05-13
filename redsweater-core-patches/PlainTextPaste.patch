@@ -1,0 +1,38 @@
+commit 82b9429dcdbc1368e73b08e8eb0a584c479095d8
+Author: Daniel Jalkut <jalkut@red-sweater.com>
+Date:   Fri May 13 12:49:57 2022 -0400
+
+    When pasting plain text, don't try to strip the HTML off the pasted content, as this prevents pasting literal brackets, for example in text. Fixes redsweater/issues#6102
+
+diff --git a/src/plugins/paste/main/ts/core/Clipboard.ts b/src/plugins/paste/main/ts/core/Clipboard.ts
+index fd1815ae6..ff36df3e6 100644
+--- a/src/plugins/paste/main/ts/core/Clipboard.ts
++++ b/src/plugins/paste/main/ts/core/Clipboard.ts
+@@ -326,10 +326,8 @@ const registerEventHandlers = (editor: Editor, pasteBin: PasteBin, pasteFormat:
+     if (plainTextMode) {
+       // Use plain text contents from Clipboard API unless the HTML contains paragraphs then
+       // we should convert the HTML to plain text since works better when pasting HTML/Word contents as plain text
+-      if (hasContentType(clipboardContent, 'text/plain') && isPlainTextHtml) {
++      if (hasContentType(clipboardContent, 'text/plain')) {
+         content = clipboardContent['text/plain'];
+-      } else {
+-        content = Utils.innerText(content);
+       }
+     }
+ 
+diff --git a/src/plugins/paste/src/main/js/core/Clipboard.js b/src/plugins/paste/src/main/js/core/Clipboard.js
+index d3a62d396..a3c1fc2fa 100644
+--- a/src/plugins/paste/src/main/js/core/Clipboard.js
++++ b/src/plugins/paste/src/main/js/core/Clipboard.js
+@@ -335,10 +335,8 @@ define(
+           if (plainTextMode) {
+             // Use plain text contents from Clipboard API unless the HTML contains paragraphs then
+             // we should convert the HTML to plain text since works better when pasting HTML/Word contents as plain text
+-            if (hasContentType(clipboardContent, 'text/plain') && isPlainTextHtml) {
++            if (hasContentType(clipboardContent, 'text/plain')) {
+               content = clipboardContent['text/plain'];
+-            } else {
+-              content = Utils.innerText(content);
+             }
+           }
+ 
