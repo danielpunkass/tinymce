@@ -326,10 +326,8 @@ const registerEventHandlers = (editor: Editor, pasteBin: PasteBin, pasteFormat: 
     if (plainTextMode) {
       // Use plain text contents from Clipboard API unless the HTML contains paragraphs then
       // we should convert the HTML to plain text since works better when pasting HTML/Word contents as plain text
-      if (hasContentType(clipboardContent, 'text/plain') && isPlainTextHtml) {
+      if (hasContentType(clipboardContent, 'text/plain')) {
         content = clipboardContent['text/plain'];
-      } else {
-        content = Utils.innerText(content);
       }
     }
 
