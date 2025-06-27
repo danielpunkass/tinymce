@@ -133,7 +133,8 @@ module.exports = function (grunt) {
       tsc: { command: 'yarn -s tsc' },
       legacy: { command: 'yarn build' },
       yarn: { command: 'yarn' },
-      'yarn-dev': { command: 'yarn -s dev' }
+      'yarn-dev': { command: 'yarn -s dev' },
+      'redsweater-build': { command: 'yarn -s redsweater-build' }
     },
     'bedrock-auto': {
       ...bedrockHeadless(headlessTests, headlessBrowser, true, opts),
@@ -192,7 +193,7 @@ Top-level grunt has been replaced by 'yarn build', and the output has moved from
   grunt.registerTask('default', ['legacy-warn', 'shell:legacy']);
 
   // Custom build target for redsweater purposes (adapted for new build system)
-  grunt.registerTask('redsweater', ['shell:yarn-dev']);
+  grunt.registerTask('redsweater', ['shell:redsweater-build']);
 
   require('load-grunt-tasks')(grunt, {
     requireResolution: true,
