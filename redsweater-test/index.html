@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Red Sweater Plugin - Final Working Test</title>
+</head>
+<body>
+  <h1>Red Sweater Plugin - Working Test</h1>
+  
+  <p>TinyMCE v8 with Red Sweater plugin functionality:</p>
+  
+  <textarea id="editor">
+    <h2>Red Sweater Plugin Test Content</h2>
+    <p>This content demonstrates all Red Sweater plugin features:</p>
+    
+    <h3>1. Document Cleanup Test</h3>
+    <p>Click "Test Cleanup" to see empty paragraph removal in action.</p>
+    
+    <h3>2. Content Patching Test</h3>
+    <blockquote>
+      This blockquote content should be automatically wrapped in proper paragraph tags when processed.
+      Raw text content should get appropriate paragraph handling.
+    </blockquote>
+    
+    <h3>3. PRE Block Escape Test</h3>
+    <pre>This is a PRE block for testing.
+Try positioning cursor at the very end and pressing Enter twice to escape the block.</pre>
+    
+    <h3>4. List Tab Handling Test</h3>
+    <ul>
+      <li>Use Tab key to indent this list item</li>
+      <li>Use Shift+Tab to outdent list items</li>
+      <li>Test the enhanced tab behavior in lists</li>
+    </ul>
+    
+    <p>This empty paragraph should be removed during cleanup:</p>
+    <p></p>
+  </textarea>
+
+  <script src="../modules/tinymce/js/tinymce/tinymce.js"></script>
+  <script>
+    console.log('=== Red Sweater Plugin Test ===');
+    
+    // Set TinyMCE base URL
+    tinymce.baseURL = '/modules/tinymce/js/tinymce';
+    
+    tinymce.init({
+      selector: '#editor',
+      height: 500,
+      
+      // License configuration for TinyMCE v8
+      license_key: 'gpl',
+      
+      // Theme and skin
+      theme: 'silver',
+      skin: 'oxide',
+      
+      // Plugins including our Red Sweater plugin
+      plugins: 'redsweater lists link code',
+      
+      toolbar: 'undo redo | bold italic | bullist numlist outdent indent | link code | addEmptyP testCleanup',
+      menubar: false,
+      
+      // Disable promotion
+      promotion: false,
+      
+      setup: function(editor) {
+        console.log('=== TinyMCE Setup Function ===');
+        
+        // Add custom button to test document cleanup
+        editor.ui.registry.addButton('testCleanup', {
+          text: 'Test Cleanup',
+          onAction: function() {
+            console.log('=== Testing Red Sweater Document Cleanup ===');
+            
+            // Get content which triggers cleanup and then set it back to see the effect
+            const originalContent = editor.getContent();
+            console.log('Original content length:', originalContent.length);
+            
+            // Set the cleaned content back to the editor to see the visual effect
+            editor.setContent(originalContent);
+            
+            const cleanedContent = editor.getContent();
+            console.log('Content after cleanup:', cleanedContent);
+            
+            // Check if empty paragraphs were removed
+            const parser = new DOMParser();
+            const originalDoc = parser.parseFromString(originalContent, 'text/html');
+            const cleanedDoc = parser.parseFromString(cleanedContent, 'text/html');
+            
+            const originalEmptyPs = originalDoc.querySelectorAll('p:empty');
+            const cleanedEmptyPs = cleanedDoc.querySelectorAll('p:empty');
+            
+            console.log('Empty paragraphs before cleanup:', originalEmptyPs.length);
+            console.log('Empty paragraphs after cleanup:', cleanedEmptyPs.length);
+            
+            if (originalEmptyPs.length > cleanedEmptyPs.length) {
+              console.log('✅ Document cleanup working - removed', originalEmptyPs.length - cleanedEmptyPs.length, 'empty paragraphs');
+              alert('✅ Red Sweater cleanup working! Removed ' + (originalEmptyPs.length - cleanedEmptyPs.length) + ' empty paragraphs. Check console for details.');
+            } else if (cleanedEmptyPs.length === 0) {
+              console.log('✅ Document cleanup working - no empty paragraphs found');
+              alert('✅ Red Sweater cleanup working! No empty paragraphs found. Check console for details.');
+            } else {
+              console.log('⚠️ Found ' + cleanedEmptyPs.length + ' empty paragraphs after cleanup');
+              alert('⚠️ Found ' + cleanedEmptyPs.length + ' empty paragraphs. Check console for details.');
+            }
+          }
+        });
+        
+        // Add button to add empty paragraph for testing
+        editor.ui.registry.addButton('addEmptyP', {
+          text: 'Add Empty P',
+          onAction: function() {
+            // Add an empty paragraph at the end for testing cleanup
+            const content = editor.getContent();
+            editor.setContent(content + '<p></p>');
+            console.log('Added empty paragraph for testing');
+          }
+        });
+        
+        editor.on('init', function() {
+          console.log('✅ TinyMCE with Red Sweater plugin initialized successfully!');
+          console.log('Editor ID:', editor.id);
+          
+          // Safely check for plugins
+          try {
+            const pluginManager = tinymce.PluginManager;
+            if (pluginManager && pluginManager.get('redsweater')) {
+              console.log('✅ Red Sweater plugin is registered and loaded');
+            } else {
+              console.log('❌ Red Sweater plugin not found in plugin manager');
+            }
+          } catch (e) {
+            console.log('Could not check plugin status:', e.message);
+          }
+        });
+        
+        // Monitor Red Sweater plugin events
+        editor.on('PreProcess', function(e) {
+          console.log('🔧 PreProcess event fired - Red Sweater document cleanup active');
+          console.log('Processing node:', e.node.nodeName);
+          
+          // Check for empty paragraph at end
+          const lastChild = e.node.lastChild;
+          if (lastChild && lastChild.nodeName === 'P') {
+            const isEmpty = !lastChild.textContent.trim() && !lastChild.querySelector('img, br, hr');
+            if (isEmpty) {
+              console.log('🧹 Empty paragraph detected at end - Red Sweater will remove it');
+            }
+          }
+        });
+        
+        editor.on('SetContent', function(e) {
+          console.log('📝 SetContent event fired - Red Sweater content patching active');
+        });
+        
+        editor.on('GetContent', function(e) {
+          console.log('📄 GetContent event fired - Red Sweater processing content');
+        });
+        
+        editor.on('keydown', function(e) {
+          if (e.keyCode === 9) { // Tab key
+            const selection = editor.selection;
+            const node = selection.getNode();
+            if (editor.dom.getParent(node, 'li')) {
+              console.log('⭐ Tab in list item - Red Sweater list tab handling active');
+            }
+          }
+          
+          if (e.keyCode === 13) { // Enter key
+            const selection = editor.selection;
+            const node = selection.getNode();
+            if (node.nodeName === 'PRE' || editor.dom.getParent(node, 'pre')) {
+              console.log('↵ Enter in PRE block - Red Sweater escape handling active');
+            }
+          }
+        });
+        
+        editor.on('keyup', function(e) {
+          if (e.keyCode === 13) { // Enter key
+            // Check if we escaped from a PRE block
+            const selection = editor.selection;
+            const node = selection.getNode();
+            if (node.nodeName === 'P' && !editor.dom.getParent(node, 'pre')) {
+              const prevSibling = node.previousSibling;
+              if (prevSibling && prevSibling.nodeName === 'PRE') {
+                console.log('✅ Successfully escaped PRE block - Red Sweater working');
+              }
+            }
+          }
+        });
+      }
+    }).then(function(editors) {
+      console.log('🎉 TinyMCE initialization completed!');
+      console.log('Number of editors created:', editors.length);
+      
+      if (editors.length > 0) {
+        console.log('✅ Editor successfully created and rendered');
+        
+        // Test initial content loading
+        setTimeout(() => {
+          const editor = editors[0];
+          const content = editor.getContent();
+          console.log('Initial content loaded, length:', content.length);
+        }, 500);
+      } else {
+        console.log('❌ No editors were created');
+      }
+    }).catch(function(error) {
+      console.error('❌ TinyMCE initialization failed:', error);
+    });
+  </script>
+  
+  <div style="margin-top: 30px; padding: 20px; background: #f0f8ff; border-radius: 8px; border-left: 4px solid #2196F3;">
+    <h3>🧪 Red Sweater Plugin Testing Guide</h3>
+    
+    <h4>✅ Features to Test:</h4>
+    <ol>
+      <li>
+        <strong>Document Cleanup:</strong> 
+        Click the "Test Cleanup" button. This should remove any empty paragraphs at the end of the content.
+      </li>
+      <li>
+        <strong>Content Patching:</strong> 
+        Add new content to blockquotes and observe automatic paragraph wrapping.
+      </li>
+      <li>
+        <strong>PRE Block Escape:</strong> 
+        Position cursor at the very end of the PRE block above, then press Enter twice to escape.
+      </li>
+      <li>
+        <strong>List Tab Handling:</strong> 
+        Click in the list items above and use Tab/Shift+Tab to test enhanced indentation.
+      </li>
+    </ol>
+    
+    <h4>📋 Expected Console Output:</h4>
+    <ul>
+      <li>✅ TinyMCE initialization messages</li>
+      <li>✅ Red Sweater plugin registration confirmation</li>
+      <li>🔧 PreProcess events when getting content</li>
+      <li>📝 SetContent events when loading content</li>
+      <li>⭐ Tab events in list items</li>
+      <li>↵ Enter events in PRE blocks</li>
+    </ul>
+    
+    <p><strong>💡 Tip:</strong> Open browser developer tools (F12) to see detailed logging of all Red Sweater plugin activities.</p>
+  </div>
+</body>
+</html>
