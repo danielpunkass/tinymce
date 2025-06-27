@@ -1,42 +1,46 @@
+# OS generated files
+.DS_Store
+*~
+
+# IDEs and editors
+.settings
+.idea
+/.idea
+.project
+.vscode
+*.iws
+*.sublime-*
+*.sublime-workspace
+.externalToolBuilders
+
+# Build artifacts
 bin
 obj
 tmp
-.settings
-.idea
-.project
-.vscode
+/tmp
+/dist
+/js
+lib
 .nyc_output
-*.sublime-*
-.externalToolBuilders
-**/bolt/bootstrap*.js
-*~
+
+# Dependencies
+node_modules
+package-lock.json
+yarn.lock
+yarn-error.log*
+lerna-debug.log
+
+# TypeScript
+tsconfig.tsbuildinfo
+
+# Logs and temporary files
 *.diff
 *.patch
 *.bak
 *.log
 *.swp
-yarn.lock
-.DS_Store
-.project
-coverage
-node_modules
-js/**/*
-imagemanager
-filemanager
-mcmanager
-powerpaste
-tinymcespellchecker
-a11ychecker
-codemirror
-mentions
-*.min.js
-*.dev.js
-*.full.js
-*.min.css
-*.dev.less
-**/dist
-**/scratch
-**/lib
-**/dependency
-**/instrumented_*
-.rpt2_cache
+
+# Project specific
+**/bolt/bootstrap*.js
+scratch
+modules/*/LICENSE.TXT
