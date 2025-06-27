@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Red Sweater Plugin Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <form>
+    <textarea id="tinymce">
+      <h1>Red Sweater Plugin Demo</h1>
+      
+      <p>This demo shows the Red Sweater plugin functionality:</p>
+      
+      <h2>Document Cleanup</h2>
+      <p>Empty paragraphs at the end of documents are automatically removed during serialization.</p>
+      
+      <h2>Content Patching</h2>
+      <blockquote>
+        This blockquote content will be automatically wrapped in paragraph tags if needed.
+        Raw text content gets proper paragraph wrapping.
+      </blockquote>
+      
+      <h2>PRE Block Handling</h2>
+      <pre>This is a PRE block.
+Try pressing Enter twice at the end to escape the block.</pre>
+      
+      <h2>List Tab Handling</h2>
+      <ul>
+        <li>Use Tab to indent list items</li>
+        <li>Use Shift+Tab to outdent list items</li>
+      </ul>
+      
+      <p>This paragraph should be automatically removed if it's empty and at the end.</p>
+    </textarea>
+  </form>
+
+  <script type="module" src="/project/tinymce/js/tinymce"></script>
+  <script type="module">
+    import '/project/tinymce/modules/tinymce/src/plugins/redsweater/demo/ts/demo/Demo.js';
+  </script>
+</body>
+</html>
